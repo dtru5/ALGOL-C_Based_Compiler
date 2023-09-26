@@ -22,6 +22,11 @@
 #include<malloc.h>
 #include "ast.h" 
 
+/*MAKE SURE TO READ THIS AND TO DO.*/
+//Originally in ast.h but moved to c file due to compliation errors
+//Make sure to move back when submitting.
+ASTnode *program; // pointer to the tree
+
 /* uses malloc to create an ASTnode and passes back the heap address of the newley created node */
 // PRE: Given a valid ASTtype variable.
 // POST: Return a new node.

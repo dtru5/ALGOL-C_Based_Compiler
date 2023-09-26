@@ -60,9 +60,7 @@ typedef struct ASTnodetype
 ASTnode *ASTCreateNode(enum ASTtype mytype);
 
 void PT(int howmany);
-
-
-ASTnode *program; // pointer to the tree
+//moving ASTnode *program; to c file
 
 /*  Print out the abstract syntax tree */
 void ASTprint(int level,ASTnode *p);
