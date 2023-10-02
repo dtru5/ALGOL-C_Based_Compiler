@@ -1,16 +1,9 @@
 %{
 /*
 Name: Dominik Trujillo
-Date: 09/15/2023
-Lab 5 Algol-C into YACC and LEX 
-Purpose: The purpose of this lab is to create YACC and LEX routines that will parse the given input
-and match that with the defined language definition. The main learning objective was to develop 
-a deeper understanding of how to parse inputs and defining rules for the syntax of the returned tokens that are read
-from LEX and then translated by YACC to be able to read and determine whether or not a given input is grammatically correct.
-
-Rules:
-	Every time T_ID is used it will print out the ID with the specific production rule. 
-	Strings will be printed out.
+Date: 10/01/2023
+LAB 6 ALGOL Abstract Syntax Tree
+Purpose: The purpose of this lab is to 
 */
 
 
@@ -48,7 +41,8 @@ void yyerror (s)  /* Called by yyparse on error */
 /* creating a union of type int and char pointer for num and string */
 %union { int num;
 	 char * string; 
-	 ASTnode * node;}
+	 ASTnode * node; //Added ASTNode pointer called node into the union.
+	 }
 
 /* Creating tokens for T_NUM to be type num, T_ID to be type string, and T_STRING to be type string */	
 %token <num> T_NUM
@@ -56,6 +50,9 @@ void yyerror (s)  /* Called by yyparse on error */
 %token <string> T_STRING
 /* Declaring the rest of the tokens that will be used for this program */
 %token T_INT T_VOID T_BOOLEAN T_BEGIN T_END T_RETURN T_READ T_WRITE T_LE T_GE T_EQ T_NE T_AND T_OR T_NOT T_IF T_THEN T_ELSE T_ENDIF T_WHILE T_DO T_TRUE T_FALSE
+
+/*Making Declaration be type node*/
+%type <node> Declaration Declarationlist
 
 %left '|'
 %left '&'
@@ -70,12 +67,19 @@ Program 		: Declarationlist
 			;
 /* 2. A Declarationlist can be a Declaration or a Declaration followed by a Declarationlist */
 Declarationlist 	: Declaration 
-			| Declaration Declarationlist
-			;
+					{$$ = ASTCreateNode(A_DEC_LIST); //Set the companion value to be a node with type A_DEC_LIST
+					 $$->s1 = $1; //Set s1 of the node to be the Declaration value
+					}
+					| Declaration Declarationlist 
+					{$$ = ASTCreateNode(A_DEC_LIST) //Set the companion value to be a node with type A_DEC_LIST;
+					$$->s1 = $1; //Set the s1 branch to be a Declaration
+					$$->s2 = $2; //Set the s2 branch to be a Declarationlist
+					}
+					;
 /* 3. A Declaration can be a VarDeclaration or a FunDeclaration */		 
-Declaration 		: VarDeclaration
-	    		| FunDeclaration 
-	    		;
+Declaration 		: VarDeclaration {$$ = NULL;}
+	    			| FunDeclaration {$$ = NULL;}
+	    			;
 /* 4. A VarDeclaration can be a TypeSpecifier followed by a VarList and a semicolon */	    
 VarDeclaration 		: TypeSpecifier VarList ';'
 	       		;

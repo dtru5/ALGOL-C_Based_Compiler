@@ -1,11 +1,8 @@
 /*
 Name: Dominik Trujillo
-Date: 09/15/2023
-Lab 5 Algol-C into YACC and LEX 
-Purpose: The purpose of this lab is to create YACC and LEX routines that will parse the given input
-and match that with the defined language definition. The main learning objective was to develop 
-a deeper understanding of how to parse inputs and defining rules for the syntax of the returned tokens that are read
-from LEX and then translated by YACC to be able to read and determine whether or not a given input is grammatically correct.
+Date: 10/01/2023
+LAB 6 ALGOL Abstract Syntax Tree
+Purpose: The purpose of this lab is to 
 	
 */
 %{
