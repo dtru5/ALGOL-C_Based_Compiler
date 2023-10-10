@@ -58,6 +58,11 @@ void PT(int howmany)
 
 char * DataTypeToString(enum DataTypes mydatatype){
     switch (mydatatype) {
+            //Adding case for A_INTTYPE
+            case A_INTTYPE: return ("int");
+                            break;
+            case A_BOOLEANTYPE: return ("boolean");
+                            break;
            case A_VOIDTYPE:  return ("void");
                              break;
            default: printf("Unknown type in DataTypeToString\n");
@@ -74,6 +79,10 @@ void ASTprint(int level,ASTnode *p)
 
     // when here p is not NULL
    switch (p->nodetype) {
+        case A_DEC_LIST : ASTprint(level, p->s1);
+                          ASTprint(level, p->s2);
+                          break;
+
         case A_VARDEC :  printf("Variable ");
                          printf("%s ", DataTypeToString(p->datatype));
                          printf(" %s",p->name);

@@ -17,7 +17,6 @@ extern int mydebug;
 sort of production rule we came across */
 
 enum ASTtype {
-   A_PROGRAM,
    A_VARDEC,
    A_DEC_LIST, //Added A_DEC_LIST
    A_FUNCTIONDEC,
@@ -30,8 +29,9 @@ enum ASTtype {
 };
 
 enum DataTypes {
-  A_INTTYPE,
-   A_VOIDTYPE
+   A_INTTYPE,
+   A_VOIDTYPE,
+   A_BOOLEANTYPE
 };
 
 enum OPERATORS {
