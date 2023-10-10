@@ -66,11 +66,11 @@ void yyerror (s)  /* Called by yyparse on error */
 
 %%	/* end specs, begin rules */
 /* 1. A Program can be a Declarationlist*/
-Program 		: Declarationlist
-				{
-					program = $1;
-				}
-				;
+Program             : Declarationlist
+                    {
+						program = $1;
+					}
+					;
 /* 2. A Declarationlist can be a Declaration or a Declaration followed by a Declarationlist */
 Declarationlist 	: Declaration 
 					{
@@ -104,36 +104,46 @@ VarDeclaration 		: TypeSpecifier VarList ';'
 /* a T_ID followed by an open bracket, T_NUM, close bracket, comma, and a VarList */	       
 VarList 			: T_ID  
 						{
-						$$ = ASTCreateNode(A_VARDEC);
-						$$->name = $1; 
+						$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+						$$->name = $1; //Set the name with the given ID
 						}
 					| T_ID '[' T_NUM ']' 
 						{
-						$$ = ASTCreateNode(A_VARDEC);
-						$$->name = $1;
-						$$->value = $3;
-						} //FIX ME --updated
+						$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+						$$->name = $1; //Set the name to be the ID
+						$$->value = $3; //Set the value with the given NUM
+						} 
 					| T_ID ',' VarList 
 						{
-						$$ = ASTCreateNode(A_VARDEC);
-						$$->name = $1;
-						$$->s1 = $3;
-						} //FIX ME --updated
+						$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+						$$->name = $1; //Set the name with ID
+						$$->s1 = $3; //Set the s1 branch to be another Varlist
+						} 
 					| T_ID '[' T_NUM ']' ',' VarList 
 						{
-						$$ = ASTCreateNode(A_VARDEC);
-						$$->name = $1;
-						$$->value = $3;
-						$$->s1 = $6;
-						} //FIX ME
-			;
+						$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+						$$->name = $1; //Set the name with the ID
+						$$->value = $3; //Set the value with the NUM
+						$$->s1 = $6; //Set the s1 branch to be another Varlist.
+						}
+						;
 /* 5. A TypeSpecifier can be a T_INT, T_VOID, or a T_BOOLEAN */	
 TypeSpecifier   	: T_INT {$$ = A_INTTYPE;}
 					| T_VOID {$$ = A_VOIDTYPE;}
 					| T_BOOLEAN {$$ = A_BOOLEANTYPE;}
 					;
 /* 6. A FunDeclaration can be a TypeSpecifier followed by a T_ID, open parenthesis, Params, close parenthesis, and a CompoundStmt */		
-FunDeclaration 		: TypeSpecifier T_ID '(' Params ')' CompoundStmt {fprintf(stderr,"FUNDEC ID NAME IS %s\n", $2); }
+FunDeclaration 		: TypeSpecifier T_ID '(' Params ')' CompoundStmt 
+						{
+						fprintf(stderr,"FUNDEC ID NAME IS %s\n", $2); 
+						/*
+						$ $ = ASTCreateNode(A_FUNCTIONDEC);
+						$ $->datatype = $ 1;
+						$ $ ->name = $ 2;
+						$ $ ->s1 = $ 4;
+						$ $ ->s2 = $ 6;
+						*/
+						}
 					;
 /* 7. A Params can be a T_VOID or a ParamList */		
 Params 				: T_VOID 
