@@ -18,7 +18,10 @@ sort of production rule we came across */
 
 enum ASTtype {
    A_VARDEC,
+   A_FUNDEC, //Added A_FUNDEC
    A_DEC_LIST, //Added A_DEC_LIST
+   A_COMPOUND, //Added A_COMPOUND
+   A_STATEMENTLIST, //Added A_STATEMENTLIST
    A_FUNCTIONDEC,
    A_IDENT,
    A_NUMBER,

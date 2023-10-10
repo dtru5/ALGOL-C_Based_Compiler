@@ -54,7 +54,8 @@ void yyerror (s)  /* Called by yyparse on error */
 %token T_INT T_VOID T_BOOLEAN T_BEGIN T_END T_RETURN T_READ T_WRITE T_LE T_GE T_EQ T_NE T_AND T_OR T_NOT T_IF T_THEN T_ELSE T_ENDIF T_WHILE T_DO T_TRUE T_FALSE
 
 /*Making Declaration be type node*/
-%type <node> Declaration Declarationlist VarDeclaration VarList
+%type <node> Declaration Declarationlist VarDeclaration VarList FunDeclaration CompoundStmt LocalDeclarations
+%type <node> StatementList Statement
 %type <datatype> TypeSpecifier
 
 %left '|'
@@ -86,7 +87,7 @@ Declarationlist 	: Declaration
 					;
 /* 3. A Declaration can be a VarDeclaration or a FunDeclaration */		 
 Declaration 		: VarDeclaration {$$ = $1;}
-	    			| FunDeclaration {$$ = NULL;}
+	    			| FunDeclaration {$$ = $1;}
 	    			;
 /* 4. A VarDeclaration can be a TypeSpecifier followed by a VarList and a semicolon */	    
 VarDeclaration 		: TypeSpecifier VarList ';'
@@ -135,14 +136,11 @@ TypeSpecifier   	: T_INT {$$ = A_INTTYPE;}
 /* 6. A FunDeclaration can be a TypeSpecifier followed by a T_ID, open parenthesis, Params, close parenthesis, and a CompoundStmt */		
 FunDeclaration 		: TypeSpecifier T_ID '(' Params ')' CompoundStmt 
 						{
-						fprintf(stderr,"FUNDEC ID NAME IS %s\n", $2); 
-						/*
-						$ $ = ASTCreateNode(A_FUNCTIONDEC);
-						$ $->datatype = $ 1;
-						$ $ ->name = $ 2;
-						$ $ ->s1 = $ 4;
-						$ $ ->s2 = $ 6;
-						*/
+						$$ = ASTCreateNode(A_FUNDEC);
+						$$->name = $2; //Setting the name with the ID
+						$$->datatype = $1; //Setting the datatype with the given TypeSpecifier
+						$$->s1 = NULL; //FIX ME Setting the s1 branch to be the Params
+						$$->s2 = $6; //Setting s2 branch to be the Compound statement
 						}
 					;
 /* 7. A Params can be a T_VOID or a ParamList */		
@@ -160,24 +158,44 @@ Param 				: TypeSpecifier T_ID {fprintf(stderr,"PARAM T_ID value %s\n", $2); }
 					;
 /* 10. A CompoundStmt can be a T_BEGIN followed by LocalDeclarations, StatementList, and T_END */	
 CompoundStmt 		: T_BEGIN LocalDeclarations StatementList T_END
+					{
+						$$ = ASTCreateNode(A_COMPOUND);
+						$$->s1 = $2;
+						$$->s2 = $3;
+					}
 					;
 /* 11. LocalDeclarations can be either empty or a VarDeclaration followed by a LocalDeclarations */
 LocalDeclarations 	: /* empty */
+					{
+						$$ = NULL;
+					}
 		  			| VarDeclaration LocalDeclarations 
+					{
+						$$ = $1;
+						$$->s2 = $2;
+					}
 		  			;
 /* 12. A StatementList can either be empty or a Statement followed by a StatementList */	
 StatementList 		: /* empty */
+					{
+						$$ = ASTCreateNode(A_STATEMENTLIST);
+					}
 					| Statement StatementList
+					{
+						$$ = ASTCreateNode(A_STATEMENTLIST);
+						$$->s1 = $1;
+						$$->s2 = $2;
+					}
 					;
 /* 13. A Statement can be any of the following listed below. */
-Statement 			: ExpressionStmt
-					| CompoundStmt
-					| SelectionStmt
-					| IterationStmt
-					| AssignmentStmt
-					| ReturnStmt
-					| ReadStmt
-					| WriteStmt
+Statement 			: ExpressionStmt{$$ = NULL;}
+					| CompoundStmt{$$ = NULL;}
+					| SelectionStmt{$$ = NULL;}
+					| IterationStmt{$$ = NULL;}
+					| AssignmentStmt{$$ = NULL;}
+					| ReturnStmt{$$ = NULL;}
+					| ReadStmt{$$ = NULL;}
+					| WriteStmt{$$ = NULL;}
 					;
 /* 14. A ExpressionStmt can be an Expression followed by a semicolon or just a semicolon */
 ExpressionStmt		: Expression ';'

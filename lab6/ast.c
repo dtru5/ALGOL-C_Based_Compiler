@@ -83,14 +83,33 @@ void ASTprint(int level,ASTnode *p)
                           ASTprint(level, p->s2);
                           break;
 
-        case A_VARDEC :  printf("Variable ");
-                         printf("%s ", DataTypeToString(p->datatype));
-                         printf(" %s",p->name);
-                         if (p->value > 0)
-                            printf("[%d]",p->value);
-                         printf("\n");
-		         ASTprint(level,p->s1); 
-                     break;
+        case A_VARDEC : PT(level); 
+                        printf("Variable ");
+                        printf("%s ", DataTypeToString(p->datatype));
+                        printf(" %s",p->name);
+                        if (p->value > 0)
+                           printf("[%d]",p->value);
+                        printf("\n");
+		                ASTprint(level,p->s1); 
+                        break;
+
+        case A_FUNDEC : PT(level); 
+                        printf("Function ");
+                        printf("%s ", DataTypeToString(p->datatype));
+                        printf(" %s",p->name);
+                        printf("\n");
+		                ASTprint(level,p->s1); //Parameters
+                        ASTprint(level,p->s2); //Compound Statement
+                        break;
+
+        case A_COMPOUND : PT(level);
+                        ASTprint(level,p->s1); //Local Decs
+                        ASTprint(level,p->s2); //Statement list
+                        break;
+
+        case A_STATEMENTLIST : ASTprint(level,p->s1); //Local Decs
+                        ASTprint(level,p->s2); //Statement list
+                        break;
 
         default: printf("unknown type in ASTprint%d\n",p->nodetype);
                  printf("Exiting ASTprint immediately\n");
