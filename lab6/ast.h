@@ -22,9 +22,10 @@ enum ASTtype {
    A_DEC_LIST, //Added A_DEC_LIST
    A_COMPOUND, //Added A_COMPOUND
    A_STATEMENTLIST, //Added A_STATEMENTLIST
+   A_WRITE,
    A_FUNCTIONDEC,
    A_IDENT,
-   A_NUMBER,
+   A_NUM,
    A_EXPR,
    A_IFSTMT
  

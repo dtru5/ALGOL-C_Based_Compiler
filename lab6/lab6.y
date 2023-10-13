@@ -44,6 +44,7 @@ void yyerror (s)  /* Called by yyparse on error */
 	 char * string; 
 	 ASTnode * node; //Added ASTNode pointer called node into the union.
 	 enum DataTypes datatype; //Added DataTypes into the union.
+	 enum OPERATORS operator;
 	 }
 
 /* Creating tokens for T_NUM to be type num, T_ID to be type string, and T_STRING to be type string */	
@@ -55,8 +56,9 @@ void yyerror (s)  /* Called by yyparse on error */
 
 /*Making Declaration be type node*/
 %type <node> Declaration Declarationlist VarDeclaration VarList FunDeclaration CompoundStmt LocalDeclarations
-%type <node> StatementList Statement
+%type <node> StatementList Statement WriteStmt Expression SimpleExpression AdditiveExpression Term Factor
 %type <datatype> TypeSpecifier
+%type <operator> Addop
 
 %left '|'
 %left '&'
@@ -195,7 +197,7 @@ Statement 			: ExpressionStmt{$$ = NULL;}
 					| AssignmentStmt{$$ = NULL;}
 					| ReturnStmt{$$ = NULL;}
 					| ReadStmt{$$ = NULL;}
-					| WriteStmt{$$ = NULL;}
+					| WriteStmt{$$ = $1;}
 					;
 /* 14. A ExpressionStmt can be an Expression followed by a semicolon or just a semicolon */
 ExpressionStmt		: Expression ';'
@@ -218,22 +220,32 @@ ReadStmt 			: T_READ Var ';'
 					;
 /* 19. A WriteStmt can be a sequence of T_WRITE followed by an Expression and a semicolon or a T_WRITE followed by a T_STRING and a semicolon */		
 WriteStmt 			: T_WRITE Expression ';'
+					{
+						$$ = ASTCreateNode(A_WRITE);
+						$$->s1 = $2; //FIX ME
+					}
 					| T_WRITE T_STRING ';' 
-					{ fprintf(stderr,"write string with value: %s\n", $2); }
+					{
+						$$ = ASTCreateNode(A_WRITE);
+						$$->name = $2;
+					}
 					;
 /* 20. A AssignmentStmt can be a Var followed by an equals sign, SimpleExpression, and a semicolon */		
 AssignmentStmt 		: Var '=' SimpleExpression ';'
 					;	
 /* 21. An Expression can be a SimpleExpression */		
-Expression 			: SimpleExpression
+Expression 			: SimpleExpression {$$ = $1;}
 					;
 /* 22. A Var can be a T_ID or a T_ID followed by an open bracket, Expression, close bracket */		
 Var 				: T_ID {fprintf(stderr,"inside a var with value %s\n", $1); }
 					| T_ID '[' Expression ']' {fprintf(stderr,"inside a var array with value %s\n", $1); }
 					;	   
 /* 23. A SimpleExpression can be an AdditiveExpression or a SimpleExpression followed by a Relop and AdditiveExpression */		
-SimpleExpression 	: AdditiveExpression 
+SimpleExpression 	: AdditiveExpression {$$ = $1;}
 					| SimpleExpression Relop AdditiveExpression
+					{
+						$$ = NULL;
+					}
 					;
 /* 24. A Relop can be any of the following tokens below */			
 Relop 				: T_LE 
@@ -245,15 +257,27 @@ Relop 				: T_LE
 					; 
 /* 25. An AdditiveExpression can be a Term or an AdditiveExpression followed by an Addop and Term */
 AdditiveExpression 	: Term 
+					{
+						$$ = $1;
+					}
 					| AdditiveExpression Addop Term 
+					{
+						$$ = ASTCreateNode(A_EXPR);
+						$$->s1 = $1;
+						$$->s2 = $3;
+						$$->operator = $2;
+					}
 					; 
 /* 26. An Addop can be a plus sign or a minus sign */
-Addop 				: '+' 
-					| '-' 
+Addop 				: '+' {$$ = A_PLUS;}
+					| '-' {$$ = A_MINUS;}
       				; 
 /* 27. A Term can be a Factor or a Term followed by a Multop and Factor */
-Term 				: Factor 
+Term 				: Factor {$$ = $1;}
      				| Term Multop Factor 
+					{
+						$$ = NULL;
+					}
 					; 
 /* 28. A Multop can be any of the following tokens below */
 Multop 				: '*' 
@@ -262,13 +286,20 @@ Multop 				: '*'
 					| T_OR 
 					; 
 /* 29. A Factor can be an open paranthesis followed by an Expression and close paranthesis or any of the tokens or productions below */	
-Factor				: '(' Expression ')'
-					| T_NUM
-					| Var
-					| Call
-					| T_TRUE
-					| T_FALSE
-					| T_NOT Factor
+Factor				: '(' Expression ')' 
+					{
+						$$ = $2;
+					}
+					| T_NUM 
+					{
+						$$ = ASTCreateNode(A_NUM);
+						$$->value = $1;
+					}
+					| Var {$$ = NULL;}
+					| Call {$$ = NULL;}
+					| T_TRUE {$$ = NULL;}
+					| T_FALSE {$$ = NULL;}
+					| T_NOT Factor {$$ = NULL;}
 					;
 /* 30. A Call can be a T_ID followed by an open paranthesis, Args, and close paranthesis */			
 Call 				: T_ID '(' Args ')' {fprintf(stderr,"CALL ID NAME IS %s\n", $1); }

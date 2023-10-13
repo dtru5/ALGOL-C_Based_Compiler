@@ -39,6 +39,7 @@ ASTnode *ASTCreateNode(enum ASTtype mytype)
     p->s1=NULL;
     p->s2=NULL;
     p->value=0;
+    p->name = NULL;
     return(p);
 }
 
@@ -49,7 +50,7 @@ ASTnode *ASTCreateNode(enum ASTtype mytype)
 void PT(int howmany)
 {
 	 for(int i = 0; i < howmany; i++){
-        printf("\t");
+        printf("  ");
      }
 }
 
@@ -96,19 +97,44 @@ void ASTprint(int level,ASTnode *p)
         case A_FUNDEC : PT(level); 
                         printf("Function ");
                         printf("%s ", DataTypeToString(p->datatype));
-                        printf(" %s",p->name);
+                        printf("%s",p->name);
                         printf("\n");
-		                ASTprint(level,p->s1); //Parameters
-                        ASTprint(level,p->s2); //Compound Statement
+		                ASTprint(level + 1,p->s1); //Parameters
+                        ASTprint(level + 1,p->s2); //Compound Statement
                         break;
 
-        case A_COMPOUND : PT(level);
-                        ASTprint(level,p->s1); //Local Decs
+        case A_COMPOUND : ASTprint(level,p->s1); //Local Decs
                         ASTprint(level,p->s2); //Statement list
                         break;
 
         case A_STATEMENTLIST : ASTprint(level,p->s1); //Local Decs
                         ASTprint(level,p->s2); //Statement list
+                        break;
+
+        case A_WRITE :  PT(level);
+                        printf("Write");
+                        if(p->name != NULL){
+                            printf(" %s\n", p->name);
+                        }
+                        else{
+                            ASTprint(level + 1, p->s1);
+                        }
+                        break;
+
+        case A_EXPR : PT(level);
+                        printf("Expression operator: ");
+                        switch (p->operator) {
+                        case A_PLUS:
+                            printf("+\n");
+                            break;
+                        
+                        default:
+                            printf("unknown type in A_EXPR in ASTprint%d\n",p->operator);
+                            printf("Exiting ASTprint immediately\n");
+                            exit(1);
+                        }
+                        ASTprint(level + 1, p->s1);
+                        ASTprint(level + 1, p->s2);
                         break;
 
         default: printf("unknown type in ASTprint%d\n",p->nodetype);
