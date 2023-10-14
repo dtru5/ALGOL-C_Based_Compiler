@@ -1,0 +1,149 @@
+the input is syntactically correct
+Variable int  A[100]
+Variable int  z
+Variable int  y
+Variable boolean  A[100]
+Variable boolean  z
+Variable boolean  y
+Variable void  y
+Function int  main(VOID)
+ BEGIN
+  Variable int  x[100]
+  ASSIGNMENT 
+   LEFT HAND SIDE 
+    VAR with name x
+   RIGHT HAND SIDE
+    NUM with value 10
+  WHILE 
+   CONDITION 
+    EXPR  <=
+     VAR with name i
+     NUM with value 10
+   WHILE BODY 
+    BEGIN
+     ASSIGNMENT 
+      LEFT HAND SIDE 
+       VAR with name x
+      RIGHT HAND SIDE
+       VAR with name i
+     ASSIGNMENT 
+      LEFT HAND SIDE 
+       VAR with name i
+        [
+         EXPR  <=
+          EXPR  +
+           VAR with name x
+           NUM with value 4
+          NUM with value 10
+        ]
+      RIGHT HAND SIDE
+       EXPR  +
+        VAR with name i
+        NUM with value 1
+     ASSIGNMENT 
+      LEFT HAND SIDE 
+       VAR with name i
+      RIGHT HAND SIDE
+       EXPR  OR
+        EXPR  AND
+         VAR with name x
+         VAR with name y
+        VAR with name z
+    END
+  Expression Statement 
+   CALL foo 
+    (
+     CALL ARGUMENT
+      VAR with name a
+     CALL ARGUMENT
+      VAR with name b
+     CALL ARGUMENT
+      VAR with name c
+       [
+        NUM with value 4
+       ]
+     CALL ARGUMENT
+      VAR with name d
+    )
+  IF Statement 
+   CONDITION 
+    EXPR  AND
+     VAR with name a
+     VAR with name b
+   IF BODY 
+    ASSIGNMENT 
+     LEFT HAND SIDE 
+      VAR with name x
+     RIGHT HAND SIDE
+      NUM with value 1
+   ELSE 
+    ASSIGNMENT 
+     LEFT HAND SIDE 
+      VAR with name z
+     RIGHT HAND SIDE
+      NUM with value 10
+  IF Statement 
+   CONDITION 
+    EXPR  AND
+     VAR with name a
+     VAR with name b
+   IF BODY 
+    ASSIGNMENT 
+     LEFT HAND SIDE 
+      VAR with name x
+     RIGHT HAND SIDE
+      NUM with value 1
+ END
+Variable boolean  A[100]
+Variable boolean  z
+Variable boolean  y
+Variable void  y
+Function void  foo
+ (
+  parameter int  A
+  parameter int  B
+ )
+
+ BEGIN
+  WRITE
+   STRING: "hello"
+  WRITE
+   EXPR  <
+    NUM with value 1
+    NUM with value 2
+  WRITE
+   EXPR  <=
+    NUM with value 1
+    NUM with value 2
+  WRITE
+   EXPR  >
+    NUM with value 1
+    NUM with value 2
+  WRITE
+   EXPR  >=
+    NUM with value 1
+    NUM with value 2
+  WRITE
+   EXPR  ==
+    NUM with value 1
+    NUM with value 2
+  WRITE
+   EXPR  !=
+    NUM with value 1
+    NUM with value 2
+  WRITE
+   EXPR  NOT
+    NUM with value 2
+  READ 
+   VAR with name X
+  READ 
+   VAR with name X
+    [
+     EXPR  <
+      EXPR  +
+       NUM with value 3
+       NUM with value 4
+      NUM with value 5
+    ]
+ END
+
