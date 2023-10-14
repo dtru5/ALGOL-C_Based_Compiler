@@ -50,7 +50,7 @@ ASTnode *ASTCreateNode(enum ASTtype mytype)
 void PT(int howmany)
 {
 	 for(int i = 0; i < howmany; i++){
-        printf("  ");
+        printf(" ");
      }
 }
 
@@ -80,21 +80,26 @@ void ASTprint(int level,ASTnode *p)
 
     // when here p is not NULL
    switch (p->nodetype) {
-        case A_DEC_LIST : ASTprint(level, p->s1);
-                          ASTprint(level, p->s2);
-                          break;
+        case A_DEC_LIST :
+                        ASTprint(level, p->s1);
+                        ASTprint(level, p->s2);
+                        break;
 
         case A_VARDEC : PT(level); 
                         printf("Variable ");
                         printf("%s ", DataTypeToString(p->datatype));
-                        printf(" %s",p->name);
+                        printf("%s",p->name);
                         if (p->value > 0)
                            printf("[%d]",p->value);
                         printf("\n");
 		                ASTprint(level,p->s1); 
+                        if(p->s2 != NULL){
+                            ASTprint(level, p->s2);
+                        }
                         break;
 
-        case A_FUNDEC : PT(level); 
+        case A_FUNDEC : 
+                        PT(level); 
                         printf("Function ");
                         printf("%s ", DataTypeToString(p->datatype));
                         printf("%s",p->name);
@@ -103,7 +108,8 @@ void ASTprint(int level,ASTnode *p)
                         ASTprint(level + 1,p->s2); //Compound Statement
                         break;
 
-        case A_COMPOUND : PT(level);
+        case A_COMPOUND : 
+                        PT(level);
                         printf("Begin\n"); 
                         ASTprint(level + 1,p->s1); //Local Decs
                         ASTprint(level + 1,p->s2); //Statement list
@@ -111,19 +117,24 @@ void ASTprint(int level,ASTnode *p)
                         printf("End\n");
                         break;
 
-        case A_STATEMENTLIST : ASTprint(level,p->s1); //Local Decs
+        case A_STATEMENTLIST : 
+                        ASTprint(level,p->s1); //Local Decs
                         ASTprint(level,p->s2); //Statement list
                         break;
 
-        case A_READ : PT(level);
+        case A_READ :   PT(level);
                         printf("Read \n");
                         ASTprint(level + 1, p->s1);
                         break;
 
-        case A_VAR : PT(level);
-                        printf("Name: %s\n", p->name);
+        case A_VAR :    PT(level);
+                        printf("VAR with name %s\n", p->name);
                         if(p->s1 != NULL){
-                            ASTprint(level + 1, p->s1);
+                            PT(level+1);
+                            printf("[\n");
+                            ASTprint(level + 2, p->s1);
+                            PT(level+1);
+                            printf("]\n");
                         }
                         break;
 
@@ -138,77 +149,98 @@ void ASTprint(int level,ASTnode *p)
                         }
                         break;
 
-        case A_ASSIGNMENTSTMT : PT(level);
-                        ASTprint(level+1, p->s1);
-                        ASTprint(level + 1, p->s2);
+        case A_ASSIGNMENTSTMT : 
+                        PT(level);
+                        printf("ASSIGNMENT\n");
+                        PT(level+1);
+                        printf("LEFT HAND SIDE\n");
+                        ASTprint(level+2, p->s1);
+                        PT(level+1);
+                        printf("RIGHT HAND SIDE\n");
+                        ASTprint(level + 2, p->s2);
                         break;
 
-        case A_IF : PT(level);
-                        printf("IF\n");
-                        ASTprint(level + 1, p->s1);
-                        PT(level);
-                        printf("THEN\n");
-                        ASTprint(level, p->s2->s1);
+        case A_IF :     PT(level);
+                        printf("IF Statement\n");
+                        PT(level + 1);
+                        printf("CONDITION\n");
+                        ASTprint(level + 2, p->s1);
+                        PT(level + 1);
+                        printf("IF BODY\n");
+                        ASTprint(level + 2, p->s2->s1);
                         if(p->s2->s2 != NULL){
-                            PT(level);
+                            PT(level+1);
                             printf("ELSE\n");
-                            ASTprint(level, p->s2->s2);
+                            ASTprint(level+2, p->s2->s2);
                         }
-                        PT(level);
-                        printf("END IF\n");
                         break;
                         
-        case A_ITERATIONSTMT : PT(level);
-                        printf("While \n");
-                        ASTprint(level + 1, p->s1);
+        case A_ITERATIONSTMT : 
                         PT(level);
-                        printf("Do \n");
-                        ASTprint(level + 1, p->s2);
+                        printf("WHILE\n");
+                        PT(level + 1);
+                        printf("CONDITION\n");
+                        ASTprint(level + 2, p->s1);
+                        PT(level + 1);
+                        printf("WHILE BODY\n");
+                        ASTprint(level + 2, p->s2);
                         break;
 
-        case A_EXPR : PT(level);
+        case A_EXPR :   PT(level);
                         printf("Expression operator: ");
                         switch (p->operator) {
-                        case A_PLUS:
-                            printf("+\n");
-                            break;
+                            case A_PLUS:
+                                printf("+\n");
+                                break;
 
-                        case A_MINUS:
-                            printf("-\n");
-                            break;
+                            case A_MINUS:
+                                printf("-\n");
+                                break;
 
-                        case A_TIMES:
-                            printf("*\n");
-                            break;
+                            case A_TIMES:
+                                printf("*\n");
+                                break;
 
-                        case A_LE:
-                            printf("<=\n");
-                            break;
+                            case A_LE:
+                                printf("<=\n");
+                                break;
 
-                        case A_LESSTHAN:
-                            printf("<\n");
-                            break;
+                            case A_LESSTHAN:
+                                printf("<\n");
+                                break;
 
-                        case A_GREATERTHAN:
-                            printf(">\n");
-                            break;
+                            case A_GREATERTHAN:
+                                printf(">\n");
+                                break;
 
-                        case A_GE:
-                            printf(">=\n");
-                            break;
+                            case A_GE:
+                                printf(">=\n");
+                                break;
 
-                        case A_EQ:
-                            printf("==\n");
-                            break;
+                            case A_EQ:
+                                printf("==\n");
+                                break;
 
-                        case A_NE:
-                            printf("!=\n");
-                            break;
-                        
-                        default:
-                            printf("unknown type in A_EXPR in ASTprint%d\n",p->operator);
-                            printf("Exiting ASTprint immediately\n");
-                            exit(1);
+                            case A_NE:
+                                printf("!=\n");
+                                break;
+
+                            case A_AND:
+                                printf("AND\n");
+                                break;
+
+                            case A_DIVIDES:
+                                printf("/\n");
+                                break;
+
+                            case A_OR:
+                                printf("OR\n");
+                                break;
+
+                            default:
+                                printf("unknown type in A_EXPR in ASTprint%d\n",p->operator);
+                                printf("Exiting ASTprint immediately\n");
+                                exit(1);
                         }
                         ASTprint(level + 1, p->s1);
                         ASTprint(level + 1, p->s2);
@@ -217,6 +249,12 @@ void ASTprint(int level,ASTnode *p)
         case A_NUM : PT(level);
                      printf("NUM with value %d\n", p->value);
                      break;
+
+        case A_CALL : PT(level);
+                    printf("CALL %s\n", p->name);
+                    PT(level + 1);
+                    printf("(\n");
+                    ASTprint(level + 2, p->s1);
 
         default: printf("unknown type in ASTprint%d\n",p->nodetype);
                  printf("Exiting ASTprint immediately\n");

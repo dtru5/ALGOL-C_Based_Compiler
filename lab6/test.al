@@ -25,4 +25,6 @@ while  i <= 10  do
        i[x+4 <= 10 ]=i+1;
        i = x and y or  z;
     end
+
+   foo(a,b, c[4], d);
 end

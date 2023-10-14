@@ -32,7 +32,8 @@ enum ASTtype {
    A_SELECTIONSTMT,
    A_ASSIGNMENTSTMT,
    A_ITERATIONSTMT, //Added A_ITERATIONSTMT
-   A_IF
+   A_IF,
+   A_CALL
  
 	   //missing
 };
@@ -52,7 +53,10 @@ enum OPERATORS {
    A_GREATERTHAN,
    A_GE,
    A_EQ,
-   A_NE
+   A_NE,
+   A_DIVIDES,
+   A_AND,
+   A_OR
  
 	   //missing
 };

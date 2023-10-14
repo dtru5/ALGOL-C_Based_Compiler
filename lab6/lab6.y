@@ -57,9 +57,9 @@ void yyerror (s)  /* Called by yyparse on error */
 /*Making Declaration be type node*/
 %type <node> Declaration Declarationlist VarDeclaration VarList FunDeclaration CompoundStmt LocalDeclarations AssignmentStmt
 %type <node> StatementList Statement WriteStmt Expression SimpleExpression AdditiveExpression Term Factor ReadStmt Var SelectionStmt
-%type <node> ExpressionStmt IterationStmt
+%type <node> ExpressionStmt IterationStmt Call ArgList Args
 %type <datatype> TypeSpecifier
-%type <operator> Addop Relop
+%type <operator> Addop Relop Multop
 
 %left '|'
 %left '&'
@@ -175,7 +175,7 @@ LocalDeclarations 	: /* empty */
 		  			| VarDeclaration LocalDeclarations 
 					{
 						$$ = $1;
-						$$->s1 = $2;
+						$$->s2 = $2;
 					}
 		  			;
 /* 12. A StatementList can either be empty or a Statement followed by a StatementList */	
@@ -326,13 +326,16 @@ Term 				: Factor {$$ = $1;}
      				| Term Multop Factor 
 					{
 						$$ = ASTCreateNode(A_EXPR);
+						$$->s1 = $1;
+						$$->s2 = $3;
+						$$->operator = $2;
 					}
 					; 
 /* 28. A Multop can be any of the following tokens below */
-Multop 				: '*' 
-					| '/' 
-					| T_AND 
-					| T_OR 
+Multop 				: '*' {$$ = A_TIMES;}
+					| '/' {$$ = A_DIVIDES;}
+					| T_AND {$$ = A_AND;}
+					| T_OR {$$ = A_OR;}
 					; 
 /* 29. A Factor can be an open paranthesis followed by an Expression and close paranthesis or any of the tokens or productions below */	
 Factor				: '(' Expression ')' 
@@ -344,23 +347,41 @@ Factor				: '(' Expression ')'
 						$$ = ASTCreateNode(A_NUM);
 						$$->value = $1;
 					}
-					| Var {$$ = NULL;}
-					| Call {$$ = NULL;}
+					| Var {$$ = $1;}
+					| Call {$$ = $1;}
 					| T_TRUE {$$ = NULL;}
 					| T_FALSE {$$ = NULL;}
 					| T_NOT Factor {$$ = NULL;}
 					;
 /* 30. A Call can be a T_ID followed by an open paranthesis, Args, and close paranthesis */			
-Call 				: T_ID '(' Args ')' {fprintf(stderr,"CALL ID NAME IS %s\n", $1); }
+Call 				: T_ID '(' Args ')' 
+					{
+						$$ = ASTCreateNode(A_CALL);
+						$$->s1 = $3;
+						$$->name = $1;
+					}
 					;
 /* 31. An Args can be empty or an ArgList */			
 Args				: /* empty */
+					{
+						$$ = NULL;
+					}
 					| ArgList
+					{
+						$$ = $1;
+					}
 					;
 	
 /* 32. An ArgList can be an Expression or an Expression followed by a comma and ArgList */		
 ArgList 			: Expression 
+					{
+						$$ = $1;
+					}
 					| Expression ',' ArgList
+					{
+						$$ = $1;
+						$$->s1 = $3;
+					}
 					;
 			
 	   
