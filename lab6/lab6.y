@@ -55,10 +55,11 @@ void yyerror (s)  /* Called by yyparse on error */
 %token T_INT T_VOID T_BOOLEAN T_BEGIN T_END T_RETURN T_READ T_WRITE T_LE T_GE T_EQ T_NE T_AND T_OR T_NOT T_IF T_THEN T_ELSE T_ENDIF T_WHILE T_DO T_TRUE T_FALSE
 
 /*Making Declaration be type node*/
-%type <node> Declaration Declarationlist VarDeclaration VarList FunDeclaration CompoundStmt LocalDeclarations
-%type <node> StatementList Statement WriteStmt Expression SimpleExpression AdditiveExpression Term Factor
+%type <node> Declaration Declarationlist VarDeclaration VarList FunDeclaration CompoundStmt LocalDeclarations AssignmentStmt
+%type <node> StatementList Statement WriteStmt Expression SimpleExpression AdditiveExpression Term Factor ReadStmt Var SelectionStmt
+%type <node> ExpressionStmt IterationStmt
 %type <datatype> TypeSpecifier
-%type <operator> Addop
+%type <operator> Addop Relop
 
 %left '|'
 %left '&'
@@ -174,7 +175,7 @@ LocalDeclarations 	: /* empty */
 		  			| VarDeclaration LocalDeclarations 
 					{
 						$$ = $1;
-						$$->s2 = $2;
+						$$->s1 = $2;
 					}
 		  			;
 /* 12. A StatementList can either be empty or a Statement followed by a StatementList */	
@@ -190,26 +191,53 @@ StatementList 		: /* empty */
 					}
 					;
 /* 13. A Statement can be any of the following listed below. */
-Statement 			: ExpressionStmt{$$ = NULL;}
-					| CompoundStmt{$$ = NULL;}
-					| SelectionStmt{$$ = NULL;}
-					| IterationStmt{$$ = NULL;}
-					| AssignmentStmt{$$ = NULL;}
+Statement 			: ExpressionStmt{$$ = $1;}
+					| CompoundStmt{$$ = $1;}
+					| SelectionStmt{$$ = $1;}
+					| IterationStmt{$$ = $1;}
+					| AssignmentStmt{$$ = $1;}
 					| ReturnStmt{$$ = NULL;}
-					| ReadStmt{$$ = NULL;}
+					| ReadStmt{$$ = $1;}
 					| WriteStmt{$$ = $1;}
 					;
 /* 14. A ExpressionStmt can be an Expression followed by a semicolon or just a semicolon */
 ExpressionStmt		: Expression ';'
+					{
+						$$ = $1;
+					}
 					| ';'
+					{
+						$$ = NULL;
+					}
 					;
 /* 15. A SelectionStmt can be a sequence of a T_IF followed by an Expression, T_THEN, Statement, and T_ENDIF or */
 /* can be sequence of a T_IF followed by an Expression, T_THEN, Statement, T_ELSE, Statement, and T_ENDIF */
 SelectionStmt		: T_IF Expression T_THEN Statement T_ENDIF
+					{
+						$$ = ASTCreateNode(A_IF);
+						$$->s1 = $2; //Set s1 branch of Selection to be the Expression
+						ASTnode *p = ASTCreateNode(A_IF); //Create a new node A_IF that will hold the if statements
+						p->s1 = $4; //Set the A_IF s1 branch with the statement, other will be NULL since it's not an else
+						$$->s2=p; //Set Selection statement's s2 to be the A_IF we created.
+					}
 					| T_IF Expression T_THEN Statement T_ELSE Statement T_ENDIF
+					{
+						$$ = ASTCreateNode(A_IF);
+						$$->s1 = $2; //Set s1 branch of Selection to be the Expression
+						ASTnode *p = ASTCreateNode(A_IF); //Create a new node A_IF that will hold the if statements
+						p->s1 = $4; //Set the A_IF s1 branch with the then statement
+						p->s2 = $6; //Set the A_IF s2 branch with the else statment
+						$$->s2=p; //Set Selection statement's s2 to be the A_IF we created.
+
+					}
 					;
 /* 16. A IterationStmt can be a sequence of a T_WHILE followed by Expression, T_DO, Statement */
 IterationStmt 		: T_WHILE Expression T_DO Statement
+					{
+						$$ = ASTCreateNode(A_ITERATIONSTMT);
+						$$->s1 = $2;
+						$$->s2 = $4;
+					}
 					;
 /* 17. A ReturnStmt can be a T_RETURN followed by a semicolon or a T_RETURN followed by an Expression and semicolon */	
 ReturnStmt 			: T_RETURN ';'
@@ -217,6 +245,10 @@ ReturnStmt 			: T_RETURN ';'
 	   				;
 /* 18. A ReadStmt can be a T_READ followed by a Var and a semicolon */   		
 ReadStmt 			: T_READ Var ';'
+					{
+						$$ = ASTCreateNode(A_READ);
+						$$->s1 = $2;
+					}
 					;
 /* 19. A WriteStmt can be a sequence of T_WRITE followed by an Expression and a semicolon or a T_WRITE followed by a T_STRING and a semicolon */		
 WriteStmt 			: T_WRITE Expression ';'
@@ -232,28 +264,45 @@ WriteStmt 			: T_WRITE Expression ';'
 					;
 /* 20. A AssignmentStmt can be a Var followed by an equals sign, SimpleExpression, and a semicolon */		
 AssignmentStmt 		: Var '=' SimpleExpression ';'
+					{
+						$$ = ASTCreateNode(A_ASSIGNMENTSTMT);
+						$$->s1 = $1;
+						$$->s2 = $3;
+					}
 					;	
 /* 21. An Expression can be a SimpleExpression */		
 Expression 			: SimpleExpression {$$ = $1;}
 					;
 /* 22. A Var can be a T_ID or a T_ID followed by an open bracket, Expression, close bracket */		
-Var 				: T_ID {fprintf(stderr,"inside a var with value %s\n", $1); }
-					| T_ID '[' Expression ']' {fprintf(stderr,"inside a var array with value %s\n", $1); }
+Var 				: T_ID 
+					{
+						$$ = ASTCreateNode(A_VAR);
+						$$->name = $1;
+					}
+					| T_ID '[' Expression ']' 
+					{
+						$$ = ASTCreateNode(A_VAR);
+						$$->name = $1;
+						$$->s1 = $3;
+					}
 					;	   
 /* 23. A SimpleExpression can be an AdditiveExpression or a SimpleExpression followed by a Relop and AdditiveExpression */		
 SimpleExpression 	: AdditiveExpression {$$ = $1;}
 					| SimpleExpression Relop AdditiveExpression
 					{
-						$$ = NULL;
+						$$ = ASTCreateNode(A_EXPR);
+						$$->s1 = $1;
+						$$->s2 = $3;
+						$$->operator = $2;
 					}
 					;
 /* 24. A Relop can be any of the following tokens below */			
-Relop 				: T_LE 
-					| '<' 
-					| '>' 
-					| T_GE 
-					| T_EQ 
-					| T_NE 
+Relop 				: T_LE {$$ = A_LE;}
+					| '<' {$$ = A_LESSTHAN;}
+					| '>' {$$ = A_GREATERTHAN;}
+					| T_GE {$$ = A_GE;}
+					| T_EQ {$$ = A_EQ;}
+					| T_NE {$$ = A_NE;}
 					; 
 /* 25. An AdditiveExpression can be a Term or an AdditiveExpression followed by an Addop and Term */
 AdditiveExpression 	: Term 
@@ -276,7 +325,7 @@ Addop 				: '+' {$$ = A_PLUS;}
 Term 				: Factor {$$ = $1;}
      				| Term Multop Factor 
 					{
-						$$ = NULL;
+						$$ = ASTCreateNode(A_EXPR);
 					}
 					; 
 /* 28. A Multop can be any of the following tokens below */

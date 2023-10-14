@@ -23,11 +23,16 @@ enum ASTtype {
    A_COMPOUND, //Added A_COMPOUND
    A_STATEMENTLIST, //Added A_STATEMENTLIST
    A_WRITE,
+   A_READ, //Added A_READ
+   A_VAR, //Added A_VAR
    A_FUNCTIONDEC,
    A_IDENT,
    A_NUM,
    A_EXPR,
-   A_IFSTMT
+   A_SELECTIONSTMT,
+   A_ASSIGNMENTSTMT,
+   A_ITERATIONSTMT, //Added A_ITERATIONSTMT
+   A_IF
  
 	   //missing
 };
@@ -41,7 +46,13 @@ enum DataTypes {
 enum OPERATORS {
    A_PLUS,
    A_MINUS,
-   A_TIMES
+   A_TIMES,
+   A_LE,
+   A_LESSTHAN,
+   A_GREATERTHAN,
+   A_GE,
+   A_EQ,
+   A_NE
  
 	   //missing
 };
