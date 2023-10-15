@@ -103,9 +103,29 @@ void ASTprint(int level,ASTnode *p)
                         printf("Function ");
                         printf("%s ", DataTypeToString(p->datatype));
                         printf("%s",p->name);
-                        printf("\n");
-		                ASTprint(level + 1,p->s1); //Parameters
+                        if(p->s1->name == NULL){
+                            printf("(VOID)\n");
+                        }
+                        else{
+                            printf("\n");
+                            PT(level + 1);
+                            printf("(\n");
+                            ASTprint(level + 2, p->s1);
+                            PT(level + 1);
+                            printf(")\n");
+                        }
                         ASTprint(level + 1,p->s2); //Compound Statement
+                        break;
+
+        case A_PARAM :  PT(level);
+                        printf("parameter ");
+                        if(p->value == -1){
+                            printf("%s %s[]\n", DataTypeToString(p->datatype), p->name);
+                        }
+                        else{
+                            printf("%s %s\n", DataTypeToString(p->datatype), p->name);
+                        }
+                        ASTprint(level, p->s1);
                         break;
 
         case A_COMPOUND : 
@@ -242,19 +262,51 @@ void ASTprint(int level,ASTnode *p)
                                 printf("Exiting ASTprint immediately\n");
                                 exit(1);
                         }
+
                         ASTprint(level + 1, p->s1);
                         ASTprint(level + 1, p->s2);
                         break;
 
-        case A_NUM : PT(level);
-                     printf("NUM with value %d\n", p->value);
-                     break;
+        case A_NUM :    PT(level);
+                        printf("NUM with value %d\n", p->value);
+                        break;
 
-        case A_CALL : PT(level);
-                    printf("CALL %s\n", p->name);
-                    PT(level + 1);
-                    printf("(\n");
-                    ASTprint(level + 2, p->s1);
+        case A_CALL :   PT(level);
+                        printf("CALL %s\n", p->name);
+                        PT(level + 1);
+                        printf("(\n");
+                        ASTprint(level+2, p->s1);
+                        break;
+
+        case A_ARGLIST :
+                        PT(level);
+                        printf("CALL ARGUMENT\n");
+                        ASTprint(level+1, p->s1);
+                        if(p->s2 != NULL){
+                            ASTprint(level, p->s2);
+                        }
+                        break;
+
+        case A_NOT :    PT(level);
+                        printf("Expression operator: NOT\n");
+                        ASTprint(level+1, p->s1);
+                        break;
+
+        case A_TRUE :   PT(level);
+                        printf("Expression operator: TRUE\n");
+                        break;
+
+        case A_FALSE :  PT(level);
+                        printf("Expression operator: False\n");
+                        break;
+
+        case A_RETURNSTMT:
+                        PT(level);
+                        printf("Return\n");
+                        if(p->s1 != NULL){
+                            ASTprint(level+1, p->s1);
+                        }
+                        break;
 
         default: printf("unknown type in ASTprint%d\n",p->nodetype);
                  printf("Exiting ASTprint immediately\n");

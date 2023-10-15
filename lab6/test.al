@@ -28,3 +28,7 @@ while  i <= 10  do
 
    foo(a,b, c[4], d);
 end
+
+void foo(int A, int B[], int c )
+begin
+end

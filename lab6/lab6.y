@@ -3,7 +3,7 @@
 Name: Dominik Trujillo
 Date: 10/01/2023
 LAB 6 ALGOL Abstract Syntax Tree
-Purpose: The purpose of this lab is to 
+Purpose: The purpose of this lab is to use our production rules to create an abstract tree 
 */
 
 
@@ -57,7 +57,7 @@ void yyerror (s)  /* Called by yyparse on error */
 /*Making Declaration be type node*/
 %type <node> Declaration Declarationlist VarDeclaration VarList FunDeclaration CompoundStmt LocalDeclarations AssignmentStmt
 %type <node> StatementList Statement WriteStmt Expression SimpleExpression AdditiveExpression Term Factor ReadStmt Var SelectionStmt
-%type <node> ExpressionStmt IterationStmt Call ArgList Args
+%type <node> ExpressionStmt IterationStmt Call ArgList Args Param Params ParamList ReturnStmt
 %type <datatype> TypeSpecifier
 %type <operator> Addop Relop Multop
 
@@ -142,22 +142,47 @@ FunDeclaration 		: TypeSpecifier T_ID '(' Params ')' CompoundStmt
 						$$ = ASTCreateNode(A_FUNDEC);
 						$$->name = $2; //Setting the name with the ID
 						$$->datatype = $1; //Setting the datatype with the given TypeSpecifier
-						$$->s1 = NULL; //FIX ME Setting the s1 branch to be the Params
+						$$->s1 = $4; //FIX ME Setting the s1 branch to be the Params
 						$$->s2 = $6; //Setting s2 branch to be the Compound statement
 						}
 					;
 /* 7. A Params can be a T_VOID or a ParamList */		
 Params 				: T_VOID 
-					| ParamList
+					{
+						$$ = ASTCreateNode(A_PARAMS);
+						
+					}
+					| ParamList 
+					{
+						$$ = $1;
+					}
 					;
 			
 /* 8. A ParamList can be a Param or a Param followed by a comma and another Param */
-ParamList			: Param
-					| Param ',' Param
+ParamList			: Param 
+					{
+						$$ = $1;
+					}
+					| Param ',' ParamList
+					{
+						$$ = $1;
+						$$->s1 = $3;
+					}
 					;
 /* 9. A Param can be a TypeSpecifier followed by a T_ID or a TypeSpecifier followed by a T_ID open and close brackets */
-Param 				: TypeSpecifier T_ID {fprintf(stderr,"PARAM T_ID value %s\n", $2); }
-					| TypeSpecifier T_ID '[' ']' {fprintf(stderr,"PARAM T_ID value %s\n", $2); }
+Param 				: TypeSpecifier T_ID 
+					{
+						$$ = ASTCreateNode(A_PARAM);
+						$$->datatype = $1;
+						$$->name = $2;
+					}
+					| TypeSpecifier T_ID '[' ']' 
+					{
+						$$ = ASTCreateNode(A_PARAM);
+						$$->datatype = $1;
+						$$->name = $2;
+						$$->value = -1;
+					}
 					;
 /* 10. A CompoundStmt can be a T_BEGIN followed by LocalDeclarations, StatementList, and T_END */	
 CompoundStmt 		: T_BEGIN LocalDeclarations StatementList T_END
@@ -196,7 +221,7 @@ Statement 			: ExpressionStmt{$$ = $1;}
 					| SelectionStmt{$$ = $1;}
 					| IterationStmt{$$ = $1;}
 					| AssignmentStmt{$$ = $1;}
-					| ReturnStmt{$$ = NULL;}
+					| ReturnStmt{$$ = $1;}
 					| ReadStmt{$$ = $1;}
 					| WriteStmt{$$ = $1;}
 					;
@@ -241,7 +266,14 @@ IterationStmt 		: T_WHILE Expression T_DO Statement
 					;
 /* 17. A ReturnStmt can be a T_RETURN followed by a semicolon or a T_RETURN followed by an Expression and semicolon */	
 ReturnStmt 			: T_RETURN ';'
+					{
+						$$ = ASTCreateNode(A_RETURNSTMT);
+					}
 					| T_RETURN Expression ';'
+					{
+						$$ = ASTCreateNode(A_RETURNSTMT);
+						$$->s1 = $2;
+					}
 	   				;
 /* 18. A ReadStmt can be a T_READ followed by a Var and a semicolon */   		
 ReadStmt 			: T_READ Var ';'
@@ -254,7 +286,7 @@ ReadStmt 			: T_READ Var ';'
 WriteStmt 			: T_WRITE Expression ';'
 					{
 						$$ = ASTCreateNode(A_WRITE);
-						$$->s1 = $2; //FIX ME
+						$$->s1 = $2;
 					}
 					| T_WRITE T_STRING ';' 
 					{
@@ -349,9 +381,19 @@ Factor				: '(' Expression ')'
 					}
 					| Var {$$ = $1;}
 					| Call {$$ = $1;}
-					| T_TRUE {$$ = NULL;}
-					| T_FALSE {$$ = NULL;}
-					| T_NOT Factor {$$ = NULL;}
+					| T_TRUE 
+					{
+						$$ = ASTCreateNode(A_TRUE);
+					}
+					| T_FALSE 
+					{
+						$$ = ASTCreateNode(A_FALSE);
+					}
+					| T_NOT Factor 
+					{
+						$$ = ASTCreateNode(A_NOT);
+						$$->s1 = $2;
+					}
 					;
 /* 30. A Call can be a T_ID followed by an open paranthesis, Args, and close paranthesis */			
 Call 				: T_ID '(' Args ')' 
@@ -375,12 +417,14 @@ Args				: /* empty */
 /* 32. An ArgList can be an Expression or an Expression followed by a comma and ArgList */		
 ArgList 			: Expression 
 					{
-						$$ = $1;
+						$$ = ASTCreateNode(A_ARGLIST);
+						$$->s1 = $1;
 					}
 					| Expression ',' ArgList
 					{
-						$$ = $1;
-						$$->s1 = $3;
+						$$ = ASTCreateNode(A_ARGLIST);
+						$$->s1 = $1;
+						$$->s2 = $3;
 					}
 					;
 			

@@ -33,7 +33,14 @@ enum ASTtype {
    A_ASSIGNMENTSTMT,
    A_ITERATIONSTMT, //Added A_ITERATIONSTMT
    A_IF,
-   A_CALL
+   A_CALL,
+   A_ARGLIST,
+   A_PARAMS,
+   A_NOT,
+   A_TRUE,
+   A_FALSE,
+   A_RETURNSTMT,
+   A_PARAM
  
 	   //missing
 };
