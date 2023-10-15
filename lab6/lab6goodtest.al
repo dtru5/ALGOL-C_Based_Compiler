@@ -20,6 +20,10 @@ begin int x[100];
        x = 1;
    endif
 
+   if true then
+        x = 6;
+    endif
+return;
 end
 // this is comment
 
@@ -38,4 +42,5 @@ begin
    write not 2;
   read X;
   read X[3+4<5];
+  return x + y;
 end
