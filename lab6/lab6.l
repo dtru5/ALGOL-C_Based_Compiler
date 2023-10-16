@@ -1,10 +1,54 @@
 /*
-Name: Dominik Trujillo
-Date: 10/01/2023
-LAB 6 ALGOL Abstract Syntax Tree
-Purpose: The purpose of this lab is to 
-	
+    Name: Dominik Trujillo
+    Date: 09/26/2023
+    Lab: LAB 6 ALGOL Abstract Syntax Tree
+    Purpose: The purpose of this lab is to enhance our existing parsing and syntax-checking capabilities by extending 
+    the functionality of the YACC program. Building upon the knowledge gained in previous
+    labs, the primary objective is to create an Abstract Syntax Tree (AST), which serves as an Intermediate Representation 
+    (IR) data structure for the parsed input program. This AST will facilitate the execution of multiple passes over the 
+    source code that is given.
+
+    To achieve this, our primary task is to modify the YACC program so that it constructs 
+    the AST during the shift/reduce processes. This involves adding semantic actions to each production rule, 
+    enabling the creation of AST nodes, linking these nodes to represent the program's structure, and ensuring 
+    that the relevant information is attached to the yylval companion stack. These AST nodes will be of different 
+    types, providing us with valuable insights into the program's structure.
+
+    Upon successful parsing and construction of the AST using the YACC program, the ultimate objective is to 
+    have a main() program that prints out the AST. This printout should be designed to reflect the structure of the 
+    input program, similar to the example provided in the lab instructions.
+
+    Key tasks for this lab include:
+
+    -Creating (in this case we'll be using and updating the given via the canvas page) a separate "ast.c" and "ast.h" file 
+    to house the Abstract Syntax Tree code.
+
+    Adding semantic actions to each production rule in the ALGOL-C submission from the previous 
+    lab to ensure AST construction.
+
+    Developing an AST printing routine to assist in debugging the semantic actions.
+
+    Using "AST()" directives as presented in class to guide the development of the Abstract Syntax Tree.
+
+    Documenting all major differences introduced in this lab compared to previous submissions, especially 
+    any changes to production rules.
+
+    Preparing to explain and discuss the code during potential in-person assessments.
+
+    Ensuring that the YACC code remains consistent with the LAB 5 submission, without altering 
+    non-terminal and terminal names.
+
+    Limiting the use of pointers in the AST to "s1" and "s2" as pointers to other AST nodes, without 
+    introducing additional pointers or alternative names.
+
+    Adhering to the naming conventions, such as starting AST enumerated types with "A_" and token names from 
+    LEX with "T_" prefixes, to avoid deductions.
+
+    By successfully completing these tasks, we aim to extend our compiler construction capabilities, enabling the 
+    creation and utilization of an Abstract Syntax Tree for improved program analysis and code generation. 
+    This lab represents a crucial step in achieving our ultimate goal of generating assembly code and running it on a simulator.
 */
+
 %{
 
 int mydebug=0;
@@ -50,7 +94,7 @@ true				{return(T_TRUE);} //If input is true, return T_TRUE
                        		
 [ \t]				{if (mydebug) fprintf(stderr,"Whitespace found\n");}
 
-[<>=\-+*%&|(),\[\]] 		{if (mydebug) fprintf(stderr,"return a token %c\n",*yytext);
+[/<>=\-+*%&|(),\[\]] 		{if (mydebug) fprintf(stderr,"return a token %c\n",*yytext);
                        			return (*yytext);}
                        		
 [;] 			        {if (mydebug) fprintf(stderr,"return a semicolon %c\n",*yytext); //Seperate read for a semicolon that will return yytext

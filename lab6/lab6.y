@@ -1,9 +1,53 @@
 %{
 /*
-Name: Dominik Trujillo
-Date: 10/01/2023
-LAB 6 ALGOL Abstract Syntax Tree
-Purpose: The purpose of this lab is to use our production rules to create an abstract tree 
+    Name: Dominik Trujillo
+    Date: 09/26/2023
+    Lab: LAB 6 ALGOL Abstract Syntax Tree
+    Purpose: The purpose of this lab is to enhance our existing parsing and syntax-checking capabilities by extending 
+    the functionality of the YACC program. Building upon the knowledge gained in previous
+    labs, the primary objective is to create an Abstract Syntax Tree (AST), which serves as an Intermediate Representation 
+    (IR) data structure for the parsed input program. This AST will facilitate the execution of multiple passes over the 
+    source code that is given.
+
+    To achieve this, our primary task is to modify the YACC program so that it constructs 
+    the AST during the shift/reduce processes. This involves adding semantic actions to each production rule, 
+    enabling the creation of AST nodes, linking these nodes to represent the program's structure, and ensuring 
+    that the relevant information is attached to the yylval companion stack. These AST nodes will be of different 
+    types, providing us with valuable insights into the program's structure.
+
+    Upon successful parsing and construction of the AST using the YACC program, the ultimate objective is to 
+    have a main() program that prints out the AST. This printout should be designed to reflect the structure of the 
+    input program, similar to the example provided in the lab instructions.
+
+    Key tasks for this lab include:
+
+    -Creating (in this case we'll be using and updating the given via the canvas page) a separate "ast.c" and "ast.h" file 
+    to house the Abstract Syntax Tree code.
+
+    Adding semantic actions to each production rule in the ALGOL-C submission from the previous 
+    lab to ensure AST construction.
+
+    Developing an AST printing routine to assist in debugging the semantic actions.
+
+    Using "AST()" directives as presented in class to guide the development of the Abstract Syntax Tree.
+
+    Documenting all major differences introduced in this lab compared to previous submissions, especially 
+    any changes to production rules.
+
+    Preparing to explain and discuss the code during potential in-person assessments.
+
+    Ensuring that the YACC code remains consistent with the LAB 5 submission, without altering 
+    non-terminal and terminal names.
+
+    Limiting the use of pointers in the AST to "s1" and "s2" as pointers to other AST nodes, without 
+    introducing additional pointers or alternative names.
+
+    Adhering to the naming conventions, such as starting AST enumerated types with "A_" and token names from 
+    LEX with "T_" prefixes, to avoid deductions.
+
+    By successfully completing these tasks, we aim to extend our compiler construction capabilities, enabling the 
+    creation and utilization of an Abstract Syntax Tree for improved program analysis and code generation. 
+    This lab represents a crucial step in achieving our ultimate goal of generating assembly code and running it on a simulator.
 */
 
 
@@ -31,8 +75,6 @@ void yyerror (s)  /* Called by yyparse on error */
 {
   printf ("%s on line %d\n", s, lineno);
 }
-
-
 %}
 /*  defines the start symbol, what values come back from LEX and how the operators are associated  */
 
@@ -44,7 +86,7 @@ void yyerror (s)  /* Called by yyparse on error */
 	 char * string; 
 	 ASTnode * node; //Added ASTNode pointer called node into the union.
 	 enum DataTypes datatype; //Added DataTypes into the union.
-	 enum OPERATORS operator;
+	 enum OPERATORS operator; //added operators to the union
 	 }
 
 /* Creating tokens for T_NUM to be type num, T_ID to be type string, and T_STRING to be type string */	
@@ -54,7 +96,7 @@ void yyerror (s)  /* Called by yyparse on error */
 /* Declaring the rest of the tokens that will be used for this program */
 %token T_INT T_VOID T_BOOLEAN T_BEGIN T_END T_RETURN T_READ T_WRITE T_LE T_GE T_EQ T_NE T_AND T_OR T_NOT T_IF T_THEN T_ELSE T_ENDIF T_WHILE T_DO T_TRUE T_FALSE
 
-/*Making Declaration be type node*/
+/*Making most non terminals to be type node*/
 %type <node> Declaration Declarationlist VarDeclaration VarList FunDeclaration CompoundStmt LocalDeclarations AssignmentStmt
 %type <node> StatementList Statement WriteStmt Expression SimpleExpression AdditiveExpression Term Factor ReadStmt Var SelectionStmt
 %type <node> ExpressionStmt IterationStmt Call ArgList Args Param Params ParamList ReturnStmt
@@ -228,11 +270,12 @@ Statement 			: ExpressionStmt{$$ = $1;}
 /* 14. A ExpressionStmt can be an Expression followed by a semicolon or just a semicolon */
 ExpressionStmt		: Expression ';'
 					{
-						$$ = $1;
+						$$ = ASTCreateNode(A_EXPRESSIONSTMT);
+						$$->s1 = $1;
 					}
 					| ';'
 					{
-						$$ = NULL;
+						$$ = ASTCreateNode(;A_EXPRESSIONSTMT);
 					}
 					;
 /* 15. A SelectionStmt can be a sequence of a T_IF followed by an Expression, T_THEN, Statement, and T_ENDIF or */
@@ -387,7 +430,7 @@ Factor				: '(' Expression ')'
 					}
 					| T_FALSE 
 					{
-						$$ = ASTCreateNode(A_FALSE);
+						$$ = ASTCreateNode(A_FALSE); 
 					}
 					| T_NOT Factor 
 					{
