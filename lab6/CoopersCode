@@ -110,7 +110,7 @@ Function int  main(VOID)
    Expression statement is NULL
   RETURN 
  END
-Variable boolean  A[100]
+Variable boolean  A[100] 
 Variable boolean  z
 Variable boolean  y
 Variable void  y

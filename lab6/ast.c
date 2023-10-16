@@ -256,6 +256,18 @@ void ASTprint(int level,ASTnode *p)
                         ASTprint(level + 2, p->s2);
                         break;
 
+        case A_EXPRESSIONSTMT : 
+                        PT(level);
+                        printf("Expression statement\n");
+                        if(p->s1 != NULL){
+                            ASTprint(level + 1, p->s1);
+                        }
+                        else{
+                            PT(level+1);
+                            printf("Expression statement is NULL\n");
+                        }
+                        break;
+
         case A_EXPR :   PT(level); //Added A_EXPR
                         printf("Expression operator: "); //Print out the Expression operator
                         switch (p->operator) { //Switch statement to handle the returned datatypes

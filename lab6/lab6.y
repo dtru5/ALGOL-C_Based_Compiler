@@ -275,7 +275,7 @@ ExpressionStmt		: Expression ';'
 					}
 					| ';'
 					{
-						$$ = ASTCreateNode(;A_EXPRESSIONSTMT);
+						$$ = ASTCreateNode(A_EXPRESSIONSTMT);
 					}
 					;
 /* 15. A SelectionStmt can be a sequence of a T_IF followed by an Expression, T_THEN, Statement, and T_ENDIF or */

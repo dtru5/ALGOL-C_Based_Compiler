@@ -70,17 +70,54 @@
 #line 1 "lab6.y"
 
 /*
-Name: Dominik Trujillo
-Date: 09/15/2023
-Lab 5 Algol-C into YACC and LEX 
-Purpose: The purpose of this lab is to create YACC and LEX routines that will parse the given input
-and match that with the defined language definition. The main learning objective was to develop 
-a deeper understanding of how to parse inputs and defining rules for the syntax of the returned tokens that are read
-from LEX and then translated by YACC to be able to read and determine whether or not a given input is grammatically correct.
+    Name: Dominik Trujillo
+    Date: 09/26/2023
+    Lab: LAB 6 ALGOL Abstract Syntax Tree
+    Purpose: The purpose of this lab is to enhance our existing parsing and syntax-checking capabilities by extending 
+    the functionality of the YACC program. Building upon the knowledge gained in previous
+    labs, the primary objective is to create an Abstract Syntax Tree (AST), which serves as an Intermediate Representation 
+    (IR) data structure for the parsed input program. This AST will facilitate the execution of multiple passes over the 
+    source code that is given.
 
-Rules:
-	Every time T_ID is used it will print out the ID with the specific production rule. 
-	Strings will be printed out.
+    To achieve this, our primary task is to modify the YACC program so that it constructs 
+    the AST during the shift/reduce processes. This involves adding semantic actions to each production rule, 
+    enabling the creation of AST nodes, linking these nodes to represent the program's structure, and ensuring 
+    that the relevant information is attached to the yylval companion stack. These AST nodes will be of different 
+    types, providing us with valuable insights into the program's structure.
+
+    Upon successful parsing and construction of the AST using the YACC program, the ultimate objective is to 
+    have a main() program that prints out the AST. This printout should be designed to reflect the structure of the 
+    input program, similar to the example provided in the lab instructions.
+
+    Key tasks for this lab include:
+
+    -Creating (in this case we'll be using and updating the given via the canvas page) a separate "ast.c" and "ast.h" file 
+    to house the Abstract Syntax Tree code.
+
+    Adding semantic actions to each production rule in the ALGOL-C submission from the previous 
+    lab to ensure AST construction.
+
+    Developing an AST printing routine to assist in debugging the semantic actions.
+
+    Using "AST()" directives as presented in class to guide the development of the Abstract Syntax Tree.
+
+    Documenting all major differences introduced in this lab compared to previous submissions, especially 
+    any changes to production rules.
+
+    Preparing to explain and discuss the code during potential in-person assessments.
+
+    Ensuring that the YACC code remains consistent with the LAB 5 submission, without altering 
+    non-terminal and terminal names.
+
+    Limiting the use of pointers in the AST to "s1" and "s2" as pointers to other AST nodes, without 
+    introducing additional pointers or alternative names.
+
+    Adhering to the naming conventions, such as starting AST enumerated types with "A_" and token names from 
+    LEX with "T_" prefixes, to avoid deductions.
+
+    By successfully completing these tasks, we aim to extend our compiler construction capabilities, enabling the 
+    creation and utilization of an Abstract Syntax Tree for improved program analysis and code generation. 
+    This lab represents a crucial step in achieving our ultimate goal of generating assembly code and running it on a simulator.
 */
 
 
@@ -95,6 +132,7 @@ int regs[MAX];
 int base, debugsw;
 int oneup = 0;
 extern int lineno;
+extern ASTnode * program;
 
 /*
 This method catches any errors made from input
@@ -108,9 +146,7 @@ void yyerror (s)  /* Called by yyparse on error */
   printf ("%s on line %d\n", s, lineno);
 }
 
-
-
-#line 114 "y.tab.c"
+#line 150 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -221,12 +257,15 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 49 "lab6.y"
+#line 85 "lab6.y"
  int num;
 	 char * string; 
-	 ASTnode * node;
+	 ASTnode * node; //Added ASTNode pointer called node into the union.
+	 enum DataTypes datatype; //Added DataTypes into the union.
+	 enum OPERATORS operator; //added operators to the union
+	 
 
-#line 230 "y.tab.c"
+#line 269 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -712,16 +751,16 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint8 yyrline[] =
+static const yytype_int16 yyrline[] =
 {
-       0,    69,    69,    72,    73,    76,    77,    80,    84,    85,
-      86,    87,    90,    91,    92,    95,    98,    99,   103,   104,
-     107,   108,   111,   114,   115,   118,   119,   122,   123,   124,
-     125,   126,   127,   128,   129,   132,   133,   137,   138,   141,
-     144,   145,   148,   151,   152,   156,   159,   162,   163,   166,
-     167,   170,   171,   172,   173,   174,   175,   178,   179,   182,
-     183,   186,   187,   190,   191,   192,   193,   196,   197,   198,
-     199,   200,   201,   202,   205,   208,   209,   213,   214
+       0,   115,   115,   121,   126,   134,   135,   138,   151,   156,
+     162,   168,   177,   178,   179,   182,   192,   197,   204,   208,
+     215,   221,   230,   239,   242,   250,   253,   261,   262,   263,
+     264,   265,   266,   267,   268,   271,   275,   282,   290,   302,
+     310,   314,   321,   328,   333,   340,   348,   351,   356,   364,
+     365,   374,   375,   376,   377,   378,   379,   382,   386,   395,
+     396,   399,   400,   409,   410,   411,   412,   415,   419,   424,
+     425,   426,   430,   434,   441,   450,   453,   460,   465
 };
 #endif
 
@@ -811,8 +850,8 @@ static const yytype_int8 yydefact[] =
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -46,   -46,   114,   -46,     9,    -7,    52,   -46,   -46,   -46,
-      98,    96,    89,    67,   -36,   -46,   -46,   -46,   -46,   -46,
+     -46,   -46,   114,   -46,     9,    -7,    52,   -46,   -46,    98,
+     -46,    96,    89,    67,   -36,   -46,   -46,   -46,   -46,   -46,
      -46,   -46,   -41,   -39,    43,   -46,    37,   -46,    36,   -46,
      -45,   -46,   -46,    13
 };
@@ -872,7 +911,7 @@ static const yytype_int8 yystos[] =
        0,     6,     7,     8,    47,    48,    49,    50,    52,    53,
        0,    48,     4,    51,    38,    40,    41,    37,     3,     4,
       51,     7,    52,    54,    55,    56,    39,     4,    42,    40,
-      40,    38,     9,    57,    56,    51,    39,    50,    52,    58,
+      40,    38,     9,    57,    55,    51,    39,    50,    52,    58,
       58,     3,     4,    11,    12,    13,    20,    21,    25,    27,
       28,    37,    41,    57,    59,    60,    61,    62,    63,    64,
       65,    66,    67,    68,    69,    70,    72,    74,    76,    77,
@@ -1370,74 +1409,634 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-  case 8: /* VarList: T_ID  */
-#line 84 "lab6.y"
-                                {fprintf(stderr,"VARLIST ID IS %s\n", (yyvsp[0].string)); }
-#line 1377 "y.tab.c"
+  case 2: /* Program: Declarationlist  */
+#line 116 "lab6.y"
+                    {
+						program = (yyvsp[0].node);
+					}
+#line 1418 "y.tab.c"
     break;
 
-  case 9: /* VarList: T_ID '[' T_NUM ']'  */
-#line 85 "lab6.y"
-                                             {fprintf(stderr,"VARLIST ID IS %s\n", (yyvsp[-3].string)); }
-#line 1383 "y.tab.c"
+  case 3: /* Declarationlist: Declaration  */
+#line 122 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_DEC_LIST); //Set the companion value to be a node with type A_DEC_LIST
+						(yyval.node)->s1 = (yyvsp[0].node); //Set s1 of the node to be the Declaration value
+					}
+#line 1427 "y.tab.c"
     break;
 
-  case 10: /* VarList: T_ID ',' VarList  */
-#line 86 "lab6.y"
-                                           {fprintf(stderr,"VARLIST ID IS %s\n", (yyvsp[-2].string)); }
-#line 1389 "y.tab.c"
-    break;
-
-  case 11: /* VarList: T_ID '[' T_NUM ']' ',' VarList  */
-#line 87 "lab6.y"
-                                                         {fprintf(stderr,"VARLIST ID IS %s\n", (yyvsp[-5].string)); }
-#line 1395 "y.tab.c"
-    break;
-
-  case 15: /* FunDeclaration: TypeSpecifier T_ID '(' Params ')' CompoundStmt  */
-#line 95 "lab6.y"
-                                                                         {fprintf(stderr,"FUNDEC ID NAME IS %s\n", (yyvsp[-4].string)); }
-#line 1401 "y.tab.c"
-    break;
-
-  case 20: /* Param: TypeSpecifier T_ID  */
-#line 107 "lab6.y"
-                                             {fprintf(stderr,"PARAM T_ID value %s\n", (yyvsp[0].string)); }
-#line 1407 "y.tab.c"
-    break;
-
-  case 21: /* Param: TypeSpecifier T_ID '[' ']'  */
-#line 108 "lab6.y"
-                                                     {fprintf(stderr,"PARAM T_ID value %s\n", (yyvsp[-2].string)); }
-#line 1413 "y.tab.c"
-    break;
-
-  case 44: /* WriteStmt: T_WRITE T_STRING ';'  */
-#line 153 "lab6.y"
-                                { fprintf(stderr,"write string with value: %s\n", (yyvsp[-1].string)); }
-#line 1419 "y.tab.c"
-    break;
-
-  case 47: /* Var: T_ID  */
-#line 162 "lab6.y"
-                               {fprintf(stderr,"inside a var with value %s\n", (yyvsp[0].string)); }
-#line 1425 "y.tab.c"
-    break;
-
-  case 48: /* Var: T_ID '[' Expression ']'  */
-#line 163 "lab6.y"
-                                                  {fprintf(stderr,"inside a var array with value %s\n", (yyvsp[-3].string)); }
-#line 1431 "y.tab.c"
-    break;
-
-  case 74: /* Call: T_ID '(' Args ')'  */
-#line 205 "lab6.y"
-                                            {fprintf(stderr,"CALL ID NAME IS %s\n", (yyvsp[-3].string)); }
+  case 4: /* Declarationlist: Declaration Declarationlist  */
+#line 127 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_DEC_LIST); //Set the companion value to be a node with type A_DEC_LIST;
+						(yyval.node)->s1 = (yyvsp[-1].node); //Set the s1 branch to be a Declaration
+						(yyval.node)->s2 = (yyvsp[0].node); //Set the s2 branch to be a Declarationlist
+					}
 #line 1437 "y.tab.c"
     break;
 
+  case 5: /* Declaration: VarDeclaration  */
+#line 134 "lab6.y"
+                                         {(yyval.node) = (yyvsp[0].node);}
+#line 1443 "y.tab.c"
+    break;
 
-#line 1441 "y.tab.c"
+  case 6: /* Declaration: FunDeclaration  */
+#line 135 "lab6.y"
+                                                 {(yyval.node) = (yyvsp[0].node);}
+#line 1449 "y.tab.c"
+    break;
+
+  case 7: /* VarDeclaration: TypeSpecifier VarList ';'  */
+#line 139 "lab6.y"
+                                        {
+						(yyval.node) = (yyvsp[-1].node);
+						ASTnode *p;
+						p = (yyvsp[-1].node);
+						while(p != NULL){
+							p->datatype = (yyvsp[-2].datatype);
+							p = p->s1;
+							}
+					}
+#line 1463 "y.tab.c"
+    break;
+
+  case 8: /* VarList: T_ID  */
+#line 152 "lab6.y"
+                                                {
+						(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+						(yyval.node)->name = (yyvsp[0].string); //Set the name with the given ID
+						}
+#line 1472 "y.tab.c"
+    break;
+
+  case 9: /* VarList: T_ID '[' T_NUM ']'  */
+#line 157 "lab6.y"
+                                                {
+						(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+						(yyval.node)->name = (yyvsp[-3].string); //Set the name to be the ID
+						(yyval.node)->value = (yyvsp[-1].num); //Set the value with the given NUM
+						}
+#line 1482 "y.tab.c"
+    break;
+
+  case 10: /* VarList: T_ID ',' VarList  */
+#line 163 "lab6.y"
+                                                {
+						(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+						(yyval.node)->name = (yyvsp[-2].string); //Set the name with ID
+						(yyval.node)->s1 = (yyvsp[0].node); //Set the s1 branch to be another Varlist
+						}
+#line 1492 "y.tab.c"
+    break;
+
+  case 11: /* VarList: T_ID '[' T_NUM ']' ',' VarList  */
+#line 169 "lab6.y"
+                                                {
+						(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+						(yyval.node)->name = (yyvsp[-5].string); //Set the name with the ID
+						(yyval.node)->value = (yyvsp[-3].num); //Set the value with the NUM
+						(yyval.node)->s1 = (yyvsp[0].node); //Set the s1 branch to be another Varlist.
+						}
+#line 1503 "y.tab.c"
+    break;
+
+  case 12: /* TypeSpecifier: T_INT  */
+#line 177 "lab6.y"
+                                {(yyval.datatype) = A_INTTYPE;}
+#line 1509 "y.tab.c"
+    break;
+
+  case 13: /* TypeSpecifier: T_VOID  */
+#line 178 "lab6.y"
+                                                 {(yyval.datatype) = A_VOIDTYPE;}
+#line 1515 "y.tab.c"
+    break;
+
+  case 14: /* TypeSpecifier: T_BOOLEAN  */
+#line 179 "lab6.y"
+                                                    {(yyval.datatype) = A_BOOLEANTYPE;}
+#line 1521 "y.tab.c"
+    break;
+
+  case 15: /* FunDeclaration: TypeSpecifier T_ID '(' Params ')' CompoundStmt  */
+#line 183 "lab6.y"
+                                                {
+						(yyval.node) = ASTCreateNode(A_FUNDEC);
+						(yyval.node)->name = (yyvsp[-4].string); //Setting the name with the ID
+						(yyval.node)->datatype = (yyvsp[-5].datatype); //Setting the datatype with the given TypeSpecifier
+						(yyval.node)->s1 = (yyvsp[-2].node); //FIX ME Setting the s1 branch to be the Params
+						(yyval.node)->s2 = (yyvsp[0].node); //Setting s2 branch to be the Compound statement
+						}
+#line 1533 "y.tab.c"
+    break;
+
+  case 16: /* Params: T_VOID  */
+#line 193 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_PARAMS);
+						
+					}
+#line 1542 "y.tab.c"
+    break;
+
+  case 17: /* Params: ParamList  */
+#line 198 "lab6.y"
+                                        {
+						(yyval.node) = (yyvsp[0].node);
+					}
+#line 1550 "y.tab.c"
+    break;
+
+  case 18: /* ParamList: Param  */
+#line 205 "lab6.y"
+                                        {
+						(yyval.node) = (yyvsp[0].node);
+					}
+#line 1558 "y.tab.c"
+    break;
+
+  case 19: /* ParamList: Param ',' ParamList  */
+#line 209 "lab6.y"
+                                        {
+						(yyval.node) = (yyvsp[-2].node);
+						(yyval.node)->s1 = (yyvsp[0].node);
+					}
+#line 1567 "y.tab.c"
+    break;
+
+  case 20: /* Param: TypeSpecifier T_ID  */
+#line 216 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_PARAM);
+						(yyval.node)->datatype = (yyvsp[-1].datatype);
+						(yyval.node)->name = (yyvsp[0].string);
+					}
+#line 1577 "y.tab.c"
+    break;
+
+  case 21: /* Param: TypeSpecifier T_ID '[' ']'  */
+#line 222 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_PARAM);
+						(yyval.node)->datatype = (yyvsp[-3].datatype);
+						(yyval.node)->name = (yyvsp[-2].string);
+						(yyval.node)->value = -1;
+					}
+#line 1588 "y.tab.c"
+    break;
+
+  case 22: /* CompoundStmt: T_BEGIN LocalDeclarations StatementList T_END  */
+#line 231 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_COMPOUND);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[-1].node);
+					}
+#line 1598 "y.tab.c"
+    break;
+
+  case 23: /* LocalDeclarations: %empty  */
+#line 239 "lab6.y"
+                                        {
+						(yyval.node) = NULL;
+					}
+#line 1606 "y.tab.c"
+    break;
+
+  case 24: /* LocalDeclarations: VarDeclaration LocalDeclarations  */
+#line 243 "lab6.y"
+                                        {
+						(yyval.node) = (yyvsp[-1].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+					}
+#line 1615 "y.tab.c"
+    break;
+
+  case 25: /* StatementList: %empty  */
+#line 250 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_STATEMENTLIST);
+					}
+#line 1623 "y.tab.c"
+    break;
+
+  case 26: /* StatementList: Statement StatementList  */
+#line 254 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_STATEMENTLIST);
+						(yyval.node)->s1 = (yyvsp[-1].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+					}
+#line 1633 "y.tab.c"
+    break;
+
+  case 27: /* Statement: ExpressionStmt  */
+#line 261 "lab6.y"
+                                                {(yyval.node) = (yyvsp[0].node);}
+#line 1639 "y.tab.c"
+    break;
+
+  case 28: /* Statement: CompoundStmt  */
+#line 262 "lab6.y"
+                                                      {(yyval.node) = (yyvsp[0].node);}
+#line 1645 "y.tab.c"
+    break;
+
+  case 29: /* Statement: SelectionStmt  */
+#line 263 "lab6.y"
+                                                       {(yyval.node) = (yyvsp[0].node);}
+#line 1651 "y.tab.c"
+    break;
+
+  case 30: /* Statement: IterationStmt  */
+#line 264 "lab6.y"
+                                                       {(yyval.node) = (yyvsp[0].node);}
+#line 1657 "y.tab.c"
+    break;
+
+  case 31: /* Statement: AssignmentStmt  */
+#line 265 "lab6.y"
+                                                        {(yyval.node) = (yyvsp[0].node);}
+#line 1663 "y.tab.c"
+    break;
+
+  case 32: /* Statement: ReturnStmt  */
+#line 266 "lab6.y"
+                                                    {(yyval.node) = (yyvsp[0].node);}
+#line 1669 "y.tab.c"
+    break;
+
+  case 33: /* Statement: ReadStmt  */
+#line 267 "lab6.y"
+                                                  {(yyval.node) = (yyvsp[0].node);}
+#line 1675 "y.tab.c"
+    break;
+
+  case 34: /* Statement: WriteStmt  */
+#line 268 "lab6.y"
+                                                   {(yyval.node) = (yyvsp[0].node);}
+#line 1681 "y.tab.c"
+    break;
+
+  case 35: /* ExpressionStmt: Expression ';'  */
+#line 272 "lab6.y"
+                                        {
+						(yyval.node) = (yyvsp[-1].node);
+					}
+#line 1689 "y.tab.c"
+    break;
+
+  case 36: /* ExpressionStmt: ';'  */
+#line 276 "lab6.y"
+                                        {
+						(yyval.node) = NULL;
+					}
+#line 1697 "y.tab.c"
+    break;
+
+  case 37: /* SelectionStmt: T_IF Expression T_THEN Statement T_ENDIF  */
+#line 283 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_IF);
+						(yyval.node)->s1 = (yyvsp[-3].node); //Set s1 branch of Selection to be the Expression
+						ASTnode *p = ASTCreateNode(A_IF); //Create a new node A_IF that will hold the if statements
+						p->s1 = (yyvsp[-1].node); //Set the A_IF s1 branch with the statement, other will be NULL since it's not an else
+						(yyval.node)->s2=p; //Set Selection statement's s2 to be the A_IF we created.
+					}
+#line 1709 "y.tab.c"
+    break;
+
+  case 38: /* SelectionStmt: T_IF Expression T_THEN Statement T_ELSE Statement T_ENDIF  */
+#line 291 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_IF);
+						(yyval.node)->s1 = (yyvsp[-5].node); //Set s1 branch of Selection to be the Expression
+						ASTnode *p = ASTCreateNode(A_IF); //Create a new node A_IF that will hold the if statements
+						p->s1 = (yyvsp[-3].node); //Set the A_IF s1 branch with the then statement
+						p->s2 = (yyvsp[-1].node); //Set the A_IF s2 branch with the else statment
+						(yyval.node)->s2=p; //Set Selection statement's s2 to be the A_IF we created.
+
+					}
+#line 1723 "y.tab.c"
+    break;
+
+  case 39: /* IterationStmt: T_WHILE Expression T_DO Statement  */
+#line 303 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_ITERATIONSTMT);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+					}
+#line 1733 "y.tab.c"
+    break;
+
+  case 40: /* ReturnStmt: T_RETURN ';'  */
+#line 311 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_RETURNSTMT);
+					}
+#line 1741 "y.tab.c"
+    break;
+
+  case 41: /* ReturnStmt: T_RETURN Expression ';'  */
+#line 315 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_RETURNSTMT);
+						(yyval.node)->s1 = (yyvsp[-1].node);
+					}
+#line 1750 "y.tab.c"
+    break;
+
+  case 42: /* ReadStmt: T_READ Var ';'  */
+#line 322 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_READ);
+						(yyval.node)->s1 = (yyvsp[-1].node);
+					}
+#line 1759 "y.tab.c"
+    break;
+
+  case 43: /* WriteStmt: T_WRITE Expression ';'  */
+#line 329 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_WRITE);
+						(yyval.node)->s1 = (yyvsp[-1].node);
+					}
+#line 1768 "y.tab.c"
+    break;
+
+  case 44: /* WriteStmt: T_WRITE T_STRING ';'  */
+#line 334 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_WRITE);
+						(yyval.node)->name = (yyvsp[-1].string);
+					}
+#line 1777 "y.tab.c"
+    break;
+
+  case 45: /* AssignmentStmt: Var '=' SimpleExpression ';'  */
+#line 341 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_ASSIGNMENTSTMT);
+						(yyval.node)->s1 = (yyvsp[-3].node);
+						(yyval.node)->s2 = (yyvsp[-1].node);
+					}
+#line 1787 "y.tab.c"
+    break;
+
+  case 46: /* Expression: SimpleExpression  */
+#line 348 "lab6.y"
+                                                   {(yyval.node) = (yyvsp[0].node);}
+#line 1793 "y.tab.c"
+    break;
+
+  case 47: /* Var: T_ID  */
+#line 352 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_VAR);
+						(yyval.node)->name = (yyvsp[0].string);
+					}
+#line 1802 "y.tab.c"
+    break;
+
+  case 48: /* Var: T_ID '[' Expression ']'  */
+#line 357 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_VAR);
+						(yyval.node)->name = (yyvsp[-3].string);
+						(yyval.node)->s1 = (yyvsp[-1].node);
+					}
+#line 1812 "y.tab.c"
+    break;
+
+  case 49: /* SimpleExpression: AdditiveExpression  */
+#line 364 "lab6.y"
+                                             {(yyval.node) = (yyvsp[0].node);}
+#line 1818 "y.tab.c"
+    break;
+
+  case 50: /* SimpleExpression: SimpleExpression Relop AdditiveExpression  */
+#line 366 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_EXPR);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+						(yyval.node)->operator = (yyvsp[-1].operator);
+					}
+#line 1829 "y.tab.c"
+    break;
+
+  case 51: /* Relop: T_LE  */
+#line 374 "lab6.y"
+                                       {(yyval.operator) = A_LE;}
+#line 1835 "y.tab.c"
+    break;
+
+  case 52: /* Relop: '<'  */
+#line 375 "lab6.y"
+                                              {(yyval.operator) = A_LESSTHAN;}
+#line 1841 "y.tab.c"
+    break;
+
+  case 53: /* Relop: '>'  */
+#line 376 "lab6.y"
+                                              {(yyval.operator) = A_GREATERTHAN;}
+#line 1847 "y.tab.c"
+    break;
+
+  case 54: /* Relop: T_GE  */
+#line 377 "lab6.y"
+                                               {(yyval.operator) = A_GE;}
+#line 1853 "y.tab.c"
+    break;
+
+  case 55: /* Relop: T_EQ  */
+#line 378 "lab6.y"
+                                               {(yyval.operator) = A_EQ;}
+#line 1859 "y.tab.c"
+    break;
+
+  case 56: /* Relop: T_NE  */
+#line 379 "lab6.y"
+                                               {(yyval.operator) = A_NE;}
+#line 1865 "y.tab.c"
+    break;
+
+  case 57: /* AdditiveExpression: Term  */
+#line 383 "lab6.y"
+                                        {
+						(yyval.node) = (yyvsp[0].node);
+					}
+#line 1873 "y.tab.c"
+    break;
+
+  case 58: /* AdditiveExpression: AdditiveExpression Addop Term  */
+#line 387 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_EXPR);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+						(yyval.node)->operator = (yyvsp[-1].operator);
+					}
+#line 1884 "y.tab.c"
+    break;
+
+  case 59: /* Addop: '+'  */
+#line 395 "lab6.y"
+                                      {(yyval.operator) = A_PLUS;}
+#line 1890 "y.tab.c"
+    break;
+
+  case 60: /* Addop: '-'  */
+#line 396 "lab6.y"
+                                              {(yyval.operator) = A_MINUS;}
+#line 1896 "y.tab.c"
+    break;
+
+  case 61: /* Term: Factor  */
+#line 399 "lab6.y"
+                                         {(yyval.node) = (yyvsp[0].node);}
+#line 1902 "y.tab.c"
+    break;
+
+  case 62: /* Term: Term Multop Factor  */
+#line 401 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_EXPR);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+						(yyval.node)->operator = (yyvsp[-1].operator);
+					}
+#line 1913 "y.tab.c"
+    break;
+
+  case 63: /* Multop: '*'  */
+#line 409 "lab6.y"
+                                      {(yyval.operator) = A_TIMES;}
+#line 1919 "y.tab.c"
+    break;
+
+  case 64: /* Multop: '/'  */
+#line 410 "lab6.y"
+                                              {(yyval.operator) = A_DIVIDES;}
+#line 1925 "y.tab.c"
+    break;
+
+  case 65: /* Multop: T_AND  */
+#line 411 "lab6.y"
+                                                {(yyval.operator) = A_AND;}
+#line 1931 "y.tab.c"
+    break;
+
+  case 66: /* Multop: T_OR  */
+#line 412 "lab6.y"
+                                               {(yyval.operator) = A_OR;}
+#line 1937 "y.tab.c"
+    break;
+
+  case 67: /* Factor: '(' Expression ')'  */
+#line 416 "lab6.y"
+                                        {
+						(yyval.node) = (yyvsp[-1].node);
+					}
+#line 1945 "y.tab.c"
+    break;
+
+  case 68: /* Factor: T_NUM  */
+#line 420 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_NUM);
+						(yyval.node)->value = (yyvsp[0].num);
+					}
+#line 1954 "y.tab.c"
+    break;
+
+  case 69: /* Factor: Var  */
+#line 424 "lab6.y"
+                                              {(yyval.node) = (yyvsp[0].node);}
+#line 1960 "y.tab.c"
+    break;
+
+  case 70: /* Factor: Call  */
+#line 425 "lab6.y"
+                                               {(yyval.node) = (yyvsp[0].node);}
+#line 1966 "y.tab.c"
+    break;
+
+  case 71: /* Factor: T_TRUE  */
+#line 427 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_TRUE);
+					}
+#line 1974 "y.tab.c"
+    break;
+
+  case 72: /* Factor: T_FALSE  */
+#line 431 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_FALSE); 
+					}
+#line 1982 "y.tab.c"
+    break;
+
+  case 73: /* Factor: T_NOT Factor  */
+#line 435 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_NOT);
+						(yyval.node)->s1 = (yyvsp[0].node);
+					}
+#line 1991 "y.tab.c"
+    break;
+
+  case 74: /* Call: T_ID '(' Args ')'  */
+#line 442 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_CALL);
+						(yyval.node)->s1 = (yyvsp[-1].node);
+						(yyval.node)->name = (yyvsp[-3].string);
+					}
+#line 2001 "y.tab.c"
+    break;
+
+  case 75: /* Args: %empty  */
+#line 450 "lab6.y"
+                                        {
+						(yyval.node) = NULL;
+					}
+#line 2009 "y.tab.c"
+    break;
+
+  case 76: /* Args: ArgList  */
+#line 454 "lab6.y"
+                                        {
+						(yyval.node) = (yyvsp[0].node);
+					}
+#line 2017 "y.tab.c"
+    break;
+
+  case 77: /* ArgList: Expression  */
+#line 461 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_ARGLIST);
+						(yyval.node)->s1 = (yyvsp[0].node);
+					}
+#line 2026 "y.tab.c"
+    break;
+
+  case 78: /* ArgList: Expression ',' ArgList  */
+#line 466 "lab6.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_ARGLIST);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+					}
+#line 2036 "y.tab.c"
+    break;
+
+
+#line 2040 "y.tab.c"
 
       default: break;
     }
@@ -1630,13 +2229,14 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 218 "lab6.y"
+#line 474 "lab6.y"
 	/* end of rules, start of program */
 
 /*
 Preconditions: Parser has been properly initialized and configured with proper tokens.
 Postconditions: yyparse is called and main exits.
 */
-int main()
-{ yyparse();
+int main(){ 
+	yyparse();
+	ASTprint(0, program);	
 } //End of main

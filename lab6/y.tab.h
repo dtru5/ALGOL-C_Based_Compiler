@@ -121,12 +121,15 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 49 "lab6.y"
+#line 85 "lab6.y"
  int num;
 	 char * string; 
-	 ASTnode * node;
+	 ASTnode * node; //Added ASTNode pointer called node into the union.
+	 enum DataTypes datatype; //Added DataTypes into the union.
+	 enum OPERATORS operator; //added operators to the union
+	 
 
-#line 130 "y.tab.h"
+#line 133 "y.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

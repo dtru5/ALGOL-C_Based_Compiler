@@ -362,7 +362,7 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[94] =
     {   0,
-        0,    0,   33,   32,   27,   31,   32,   32,   28,   32,
+        0,    0,   33,   32,   27,   31,   32,   32,   28,   28,
        26,   29,   28,   28,   28,   25,   25,   25,   25,   25,
        25,   25,   25,   25,   25,   25,   25,   25,   11,    0,
        24,   30,   26,    8,   10,    9,   25,   25,   25,   25,
@@ -499,23 +499,63 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "lab6.l"
 /*
-Name: Dominik Trujillo
-Date: 09/15/2023
-Lab 5 Algol-C into YACC and LEX 
-Purpose: The purpose of this lab is to create YACC and LEX routines that will parse the given input
-and match that with the defined language definition. The main learning objective was to develop 
-a deeper understanding of how to parse inputs and defining rules for the syntax of the returned tokens that are read
-from LEX and then translated by YACC to be able to read and determine whether or not a given input is grammatically correct.
-	
+    Name: Dominik Trujillo
+    Date: 09/26/2023
+    Lab: LAB 6 ALGOL Abstract Syntax Tree
+    Purpose: The purpose of this lab is to enhance our existing parsing and syntax-checking capabilities by extending 
+    the functionality of the YACC program. Building upon the knowledge gained in previous
+    labs, the primary objective is to create an Abstract Syntax Tree (AST), which serves as an Intermediate Representation 
+    (IR) data structure for the parsed input program. This AST will facilitate the execution of multiple passes over the 
+    source code that is given.
+
+    To achieve this, our primary task is to modify the YACC program so that it constructs 
+    the AST during the shift/reduce processes. This involves adding semantic actions to each production rule, 
+    enabling the creation of AST nodes, linking these nodes to represent the program's structure, and ensuring 
+    that the relevant information is attached to the yylval companion stack. These AST nodes will be of different 
+    types, providing us with valuable insights into the program's structure.
+
+    Upon successful parsing and construction of the AST using the YACC program, the ultimate objective is to 
+    have a main() program that prints out the AST. This printout should be designed to reflect the structure of the 
+    input program, similar to the example provided in the lab instructions.
+
+    Key tasks for this lab include:
+
+    -Creating (in this case we'll be using and updating the given via the canvas page) a separate "ast.c" and "ast.h" file 
+    to house the Abstract Syntax Tree code.
+
+    Adding semantic actions to each production rule in the ALGOL-C submission from the previous 
+    lab to ensure AST construction.
+
+    Developing an AST printing routine to assist in debugging the semantic actions.
+
+    Using "AST()" directives as presented in class to guide the development of the Abstract Syntax Tree.
+
+    Documenting all major differences introduced in this lab compared to previous submissions, especially 
+    any changes to production rules.
+
+    Preparing to explain and discuss the code during potential in-person assessments.
+
+    Ensuring that the YACC code remains consistent with the LAB 5 submission, without altering 
+    non-terminal and terminal names.
+
+    Limiting the use of pointers in the AST to "s1" and "s2" as pointers to other AST nodes, without 
+    introducing additional pointers or alternative names.
+
+    Adhering to the naming conventions, such as starting AST enumerated types with "A_" and token names from 
+    LEX with "T_" prefixes, to avoid deductions.
+
+    By successfully completing these tasks, we aim to extend our compiler construction capabilities, enabling the 
+    creation and utilization of an Abstract Syntax Tree for improved program analysis and code generation. 
+    This lab represents a crucial step in achieving our ultimate goal of generating assembly code and running it on a simulator.
 */
-#line 12 "lab6.l"
+#line 53 "lab6.l"
 
 int mydebug=0;
 int lineno = 1;
 #include "ast.h"
 #include "y.tab.h"
-#line 517 "lex.yy.c"
-#line 518 "lex.yy.c"
+#line 557 "lex.yy.c"
+#line 558 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -732,10 +772,10 @@ YY_DECL
 		}
 
 	{
-#line 20 "lab6.l"
+#line 61 "lab6.l"
 
 
-#line 738 "lex.yy.c"
+#line 778 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -794,163 +834,163 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 22 "lab6.l"
+#line 63 "lab6.l"
 {return (T_INT);} //If input is int, return token T_INT
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 23 "lab6.l"
+#line 64 "lab6.l"
 {return (T_VOID);} //If input is void, return token T_VOID
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 24 "lab6.l"
+#line 65 "lab6.l"
 {return (T_BOOLEAN);} //If input is boolean, return token T_BOOLEAN
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 25 "lab6.l"
+#line 66 "lab6.l"
 {return(T_BEGIN);} //If input is begin, return token T_BEGIN
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 26 "lab6.l"
+#line 67 "lab6.l"
 {return(T_END);} //If input is end, return token T_END
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 27 "lab6.l"
+#line 68 "lab6.l"
 {return(T_WRITE);} //If input is write, return token T_WRITE
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 28 "lab6.l"
+#line 69 "lab6.l"
 {return(T_RETURN);} //If input is return, return token T_RETURN
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 29 "lab6.l"
+#line 70 "lab6.l"
 {return(T_LE);}  //If input is <=, return token T_LE for less than or equal
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 30 "lab6.l"
+#line 71 "lab6.l"
 {return(T_GE);} //If input is >=, return token T_GE for greater than or equal
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 31 "lab6.l"
+#line 72 "lab6.l"
 {return(T_EQ);} //If input is ==, return token T_EQ for equals conditional
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 32 "lab6.l"
+#line 73 "lab6.l"
 {return(T_NE);} //If input is !=, return token T_NE for not equals
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 33 "lab6.l"
+#line 74 "lab6.l"
 {return(T_AND);} //If input is and, return token T_AND
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 34 "lab6.l"
+#line 75 "lab6.l"
 {return(T_OR);} //If input is or, return token T_OR
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 35 "lab6.l"
+#line 76 "lab6.l"
 {return(T_NOT);} //If input is not, return token T_NOT
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 36 "lab6.l"
+#line 77 "lab6.l"
 {return(T_IF);} //If input is if, return token T_OR
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 37 "lab6.l"
+#line 78 "lab6.l"
 {return(T_ELSE);} //If input is else, return token T_ELSE
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 38 "lab6.l"
+#line 79 "lab6.l"
 {return(T_READ);} //If input is read, return token T_READ
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 39 "lab6.l"
+#line 80 "lab6.l"
 {return(T_THEN);} //If input is then, return token T_THEN
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 40 "lab6.l"
+#line 81 "lab6.l"
 {return(T_ENDIF);} //If input is endif, return token T_ENDIF
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 41 "lab6.l"
+#line 82 "lab6.l"
 {return(T_WHILE);} //If input is while, return token T_WHILE
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 42 "lab6.l"
+#line 83 "lab6.l"
 {return(T_DO);} //If input is do, return token T_DO
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 43 "lab6.l"
+#line 84 "lab6.l"
 {return(T_FALSE);} //If input is false, return T_FALSE
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 44 "lab6.l"
+#line 85 "lab6.l"
 {return(T_TRUE);} //If input is true, return T_TRUE
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 45 "lab6.l"
+#line 86 "lab6.l"
 {yylval.string = strdup(yytext); return(T_STRING);} //This will capture a string in two paranthesis and anything inbetween to return a T_STRING
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 47 "lab6.l"
+#line 88 "lab6.l"
 {if (mydebug) fprintf(stderr,"ID foundz %s\n", yytext); //For any ID's that is a letter from a-z 
 				//and A-Z that can be followed a-z, A-Z, 0-9, or an underscore 
                       		 	yylval.string=strdup(yytext); return(T_ID);} //Duplicate the string from yytext and insert for companion value yylval
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 51 "lab6.l"
+#line 92 "lab6.l"
 {if (mydebug) fprintf(stderr,"Digit found\n"); 
                        			yylval.num=atoi((const char *)yytext); return(T_NUM);} //If digit, change yytext to an int and store in yylval
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 54 "lab6.l"
+#line 95 "lab6.l"
 {if (mydebug) fprintf(stderr,"Whitespace found\n");}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 56 "lab6.l"
+#line 97 "lab6.l"
 {if (mydebug) fprintf(stderr,"return a token %c\n",*yytext);
                        			return (*yytext);}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 59 "lab6.l"
+#line 100 "lab6.l"
 {if (mydebug) fprintf(stderr,"return a semicolon %c\n",*yytext); //Seperate read for a semicolon that will return yytext
                        			return (*yytext);} 
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 62 "lab6.l"
+#line 103 "lab6.l"
 {} //Do nothing when encountering a comment that is two forward slashes                   		
 	YY_BREAK
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 64 "lab6.l"
+#line 105 "lab6.l"
 { 
 				lineno++; //Increment lineno when seeing a new line
 				if (mydebug) fprintf(stderr,"cariage return %c\n",*yytext); 
@@ -958,10 +998,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 69 "lab6.l"
+#line 110 "lab6.l"
 ECHO;
 	YY_BREAK
-#line 964 "lex.yy.c"
+#line 1004 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1966,7 +2006,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 69 "lab6.l"
+#line 110 "lab6.l"
 
 
 /*

@@ -44,5 +44,5 @@ begin
    write not 2;
   read X;
   read X[3+4<5];
-  return x + y;
+  return x / y;
 end
