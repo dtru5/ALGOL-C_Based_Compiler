@@ -23,6 +23,8 @@ begin int x[100];
    if true then
         x = 6;
     endif
+    x+4;
+    ;
 return;
 end
 // this is comment

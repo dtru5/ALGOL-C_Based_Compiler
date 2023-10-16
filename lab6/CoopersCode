@@ -93,6 +93,22 @@ Function int  main(VOID)
       VAR with name x
      RIGHT HAND SIDE
       NUM with value 1
+  IF Statement 
+   CONDITION 
+    BOOLEAN with value 1
+   IF BODY 
+    ASSIGNMENT 
+     LEFT HAND SIDE 
+      VAR with name x
+     RIGHT HAND SIDE
+      NUM with value 6
+  Expression Statement 
+   EXPR  +
+    VAR with name x
+    NUM with value 4
+  Expression Statement 
+   Expression statement is NULL
+  RETURN 
  END
 Variable boolean  A[100]
 Variable boolean  z
@@ -145,5 +161,9 @@ Function void  foo
        NUM with value 4
       NUM with value 5
     ]
+  RETURN 
+   EXPR  +
+    VAR with name x
+    VAR with name y
  END
 
