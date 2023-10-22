@@ -99,7 +99,8 @@ enum ASTtype {
 enum DataTypes {
    A_INTTYPE,
    A_VOIDTYPE,
-   A_BOOLEANTYPE
+   A_BOOLEANTYPE,
+   A_UNKNOWN //Added A_UNKNOWN to help us with labeling types that aren't yet defined.
 };
 
 enum OPERATORS {
@@ -130,6 +131,7 @@ typedef struct ASTnodetype
      char * name;
      int value;
      struct ASTnodetype *s1,*s2 ; /* used for holding IF and WHILE components -- not very descriptive */
+     struct SymbTab *symbol;
 } ASTnode;
 
 

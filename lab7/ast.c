@@ -65,6 +65,7 @@
 #include<stdlib.h>  
 #include<malloc.h>
 #include "ast.h" 
+#include "symtable.h"
 
 //Originally, ASTnode *program was in ast.h, but moved to ast.c due to MINGW compilation errors
 //and was instructed that this difference wasn't significant.
@@ -135,13 +136,16 @@ void ASTprint(int level,ASTnode *p)
                         printf("Variable "); //Print out the variable with its given datatype and name.
                         printf("%s ", DataTypeToString(p->datatype)); 
                         printf("%s",p->name);
-                        if (p->value > 0) //If the p value is greater than zero, then it is an array
+                        if (p->value > 0){ //If the p value is greater than zero, then it is an array
                            printf("[%d]",p->value);
+                           printf(" with offset %d", p->symbol->offset);
+                        }
+                        else{
+                            printf(" with offset %d", p->symbol->offset);
+                        }
                         printf("\n");
 		                ASTprint(level,p->s1); //Print out the s1 from p
-                        if(p->s2 != NULL){ //If p's s2 is not NULL, then print out the s2 branch.
-                            ASTprint(level, p->s2); 
-                        }
+                        ASTprint(level, p->s2); 
                         break;
 
         case A_FUNDEC : //Added A_FUNDEC

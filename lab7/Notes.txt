@@ -1,0 +1,11 @@
+When using MINGW you can use an echo command and pipe it with an exe to run code without having it wrapped in a .al or .txt file.
+
+ex
+
+echo -e "int foo;\nint foo;" | ./lab7.exe
+
+-The 'echo' command is used to display text or output messages to the terminal or console. It timply prints the text you provide as arguments to the standard output.
+
+-The '-e' option tells 'echo' to interpret escape sequences, including '\n' (which is new line).
+
+- the '|' is to pipt it with lab7.

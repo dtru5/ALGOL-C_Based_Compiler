@@ -1,0 +1,102 @@
+In video 1:
+
+Question 1.
+--------------------------------------------------------------------------------------------------------------------------------
+Why do we 
+p->symbol->Declared_Type = $1; and get rid of p->datatype = $1;?
+
+In Yacc:
+
+VarDeclaration 		: TypeSpecifier VarList ';'
+ 					{
+						$$ = $2;
+						ASTnode *p;
+						p = $2;
+						while(p != NULL){
+							p->datatype = $1;
+							p->symbol->Declared_Type = $1;
+							p = p->s1;
+							}
+					}
+	       			;
+
+I don't understand how Cooper's code was being able to print out the data type if the
+datatype wasn't propogated in the node. I know that we are propogating p's symbol's Declared_Type with the TypeSpecifier,
+but we never set the datatype of the node to be TypeSpecifier.
+
+In ast.c:
+
+        case A_VARDEC : PT(level); //Added A_VARDEC, print out the level with function PT and the current level given. 
+                        printf("Variable "); //Print out the variable with its given datatype and name.
+
+
+                        printf("%s ", DataTypeToString(p->datatype)); 
+                        ^^^
+                        I don't understand how the datatype was being printed in the video example when it has to be set in order to print.
+
+
+                        printf("%s",p->name);
+                        if (p->value > 0) //If the p value is greater than zero, then it is an array
+                           printf("[%d]",p->value);
+                           printf(" with offset %d", p->symbol->offset);
+                        printf("\n");
+		                ASTprint(level,p->s1); //Print out the s1 from p
+                        if(p->s2 != NULL){ //If p's s2 is not NULL, then print out the s2 branch.
+                            ASTprint(level, p->s2); 
+                        }
+                        break;
+
+Question 2.
+--------------------------------------------------------------------------------------------------------------------------------
+Why does my offset print out in reverse order?
+
+In format of:
+int foo, bar[100], baz;
+
+Variable int foo with offset 101
+Variable int bar[100] with offset 1
+Variable int baz with offset 0
+-------------------------------------------
+In format of:
+int foo;
+int bar[100];
+int baz;
+
+Variable int foo with offset 0
+Variable int bar[100] with offset 1
+Variable int baz with offset 101
+
+It is going in reverse order when it is a list of variables, why?
+
+I'm confused because if we look at the production rules.
+
+| T_ID ',' VarList 
+						{
+							$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+							$$->name = $1; //Set the name with ID
+							$$->s1 = $3; //Set the s1 branch to be another Varlist
+							if (Search($1, LEVEL, 0) == NULL){
+								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+								$$->name = $1; //Set the name with ID
+								$$->s1 = $3; //Set the s1 branch to be another Varlist
+
+								//The prototype for insert for reference.
+								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
+								
+								//Set p's symbol to be the node that is returned after inserting it into the symtable
+								$$->symbol = Insert($1, A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
+								OFFSET++;
+								//FIX ME -- MISSING
+							}
+							else{
+								yyerror($1);
+								yyerror("Already defined");
+								exit(1);
+							}
+						} 
+
+We can see that we make a node A_VARDEC and set the symbol to to be that symtab with the current OFFSET, then we increment OFFSET 
+by 1 since it is just a scalar.
+
+I think the problem is that we're using a LR(1) so the offset of the VarList is being processed first?
+--------------------------------------------------------------------------------------------------------------------------------

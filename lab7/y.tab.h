@@ -121,7 +121,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 85 "lab7.y"
+#line 86 "lab7.y"
  int num;
 	 char * string; 
 	 ASTnode * node; //Added ASTNode pointer called node into the union.

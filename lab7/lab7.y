@@ -55,14 +55,15 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "ast.h"
+#include "symtable.h"
 
 int yylex();
-#define MAX 26
-int regs[MAX];
-int base, debugsw;
-int oneup = 0;
-extern int lineno;
-extern ASTnode * program;
+
+int LEVEL = 0; //How many compound statements deep we're in.
+int OFFSET = 0; //How many words have we seen at GLOBAL or inside a function.
+int GOFFSET; //Holder for global offset when we enter and exit a fucntion definition.
+extern int lineno; //Global variable for line number counter.
+extern ASTnode * program; //Brought over program from ast.c
 
 /*
 This method catches any errors made from input
@@ -142,6 +143,7 @@ VarDeclaration 		: TypeSpecifier VarList ';'
 						p = $2;
 						while(p != NULL){
 							p->datatype = $1;
+							p->symbol->Declared_Type = $1;
 							p = p->s1;
 							}
 					}
@@ -150,27 +152,80 @@ VarDeclaration 		: TypeSpecifier VarList ';'
 /* a T_ID followed by an open bracket, T_NUM, close bracket, comma, and a VarList */	       
 VarList 			: T_ID  
 						{
-						$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
-						$$->name = $1; //Set the name with the given ID
+							if (Search($1, LEVEL, 0) == NULL){
+								//Symbol not there, stick it in
+								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+								$$->name = $1; //Set the name with the given ID
+								//The prototype for insert for reference.
+								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
+								//Set p's symbol to be the node that is returned after inserting it into the symtable
+								$$->symbol = Insert($1, A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
+								OFFSET++;
+							}
+							else{
+								yyerror($1);
+								yyerror("Already defined");
+								exit(1);
+							}
+
 						}
 					| T_ID '[' T_NUM ']' 
-						{
-						$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
-						$$->name = $1; //Set the name to be the ID
-						$$->value = $3; //Set the value with the given NUM
+						{												
+							if (Search($1, LEVEL, 0) == NULL){
+								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+								$$->name = $1; //Set the name to be the ID
+								$$->value = $3; //Set the value with the given NUM
+								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
+								$$->symbol = Insert($1, A_UNKNOWN, SYM_ARRAY, LEVEL, $3, OFFSET);
+								OFFSET += $3;
+								//FIX ME -- MISSING
+							}
+							else{
+								yyerror($1);
+								yyerror("Already defined");
+								exit(1);
+							}
 						} 
 					| T_ID ',' VarList 
 						{
-						$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
-						$$->name = $1; //Set the name with ID
-						$$->s1 = $3; //Set the s1 branch to be another Varlist
+							if (Search($1, LEVEL, 0) == NULL){
+								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+								$$->name = $1; //Set the name with ID
+								$$->s1 = $3; //Set the s1 branch to be another Varlist
+
+								//The prototype for insert for reference.
+								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
+								
+								//Set p's symbol to be the node that is returned after inserting it into the symtable
+								$$->symbol = Insert($1, A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
+								OFFSET++;
+							}
+							else{
+								yyerror($1);
+								yyerror("Already defined");
+								exit(1);
+							}
 						} 
 					| T_ID '[' T_NUM ']' ',' VarList 
 						{
-						$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
-						$$->name = $1; //Set the name with the ID
-						$$->value = $3; //Set the value with the NUM
-						$$->s1 = $6; //Set the s1 branch to be another Varlist.
+							if (Search($1, LEVEL, 0) == NULL){
+								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+								$$->name = $1; //Set the name with the ID
+								$$->value = $3; //Set the value with the NUM
+								$$->s1 = $6; //Set the s1 branch to be another Varlist.
+
+								//The prototype for insert for reference.
+								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
+								
+								//Set p's symbol to be the node that is returned after inserting it into the symtable
+								$$->symbol = Insert($1, A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
+								OFFSET += $3;
+							}
+							else{
+								yyerror($1);
+								yyerror("Already defined");
+								exit(1);
+							}
 						}
 						;
 /* 5. A TypeSpecifier can be a T_INT, T_VOID, or a T_BOOLEAN */	
@@ -181,11 +236,11 @@ TypeSpecifier   	: T_INT {$$ = A_INTTYPE;}
 /* 6. A FunDeclaration can be a TypeSpecifier followed by a T_ID, open parenthesis, Params, close parenthesis, and a CompoundStmt */		
 FunDeclaration 		: TypeSpecifier T_ID '(' Params ')' CompoundStmt 
 						{
-						$$ = ASTCreateNode(A_FUNDEC);
-						$$->name = $2; //Setting the name with the ID
-						$$->datatype = $1; //Setting the datatype with the given TypeSpecifier
-						$$->s1 = $4; //FIX ME Setting the s1 branch to be the Params
-						$$->s2 = $6; //Setting s2 branch to be the Compound statement
+							$$ = ASTCreateNode(A_FUNDEC);
+							$$->name = $2; //Setting the name with the ID
+							$$->datatype = $1; //Setting the datatype with the given TypeSpecifier
+							$$->s1 = $4; //Setting the s1 branch to be the Params
+							$$->s2 = $6; //Setting s2 branch to be the Compound statement
 						}
 					;
 /* 7. A Params can be a T_VOID or a ParamList */		

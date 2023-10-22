@@ -125,14 +125,15 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "ast.h"
+#include "symtable.h"
 
 int yylex();
-#define MAX 26
-int regs[MAX];
-int base, debugsw;
-int oneup = 0;
-extern int lineno;
-extern ASTnode * program;
+
+int LEVEL = 0; //How many compound statements deep we're in.
+int OFFSET = 0; //How many words have we seen at GLOBAL or inside a function.
+int GOFFSET; //Holder for global offset when we enter and exit a fucntion definition.
+extern int lineno; //Global variable for line number counter.
+extern ASTnode * program; //Brought over program from ast.c
 
 /*
 This method catches any errors made from input
@@ -146,7 +147,7 @@ void yyerror (s)  /* Called by yyparse on error */
   printf ("%s on line %d\n", s, lineno);
 }
 
-#line 150 "y.tab.c"
+#line 151 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -257,7 +258,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 85 "lab7.y"
+#line 86 "lab7.y"
  int num;
 	 char * string; 
 	 ASTnode * node; //Added ASTNode pointer called node into the union.
@@ -265,7 +266,7 @@ union YYSTYPE
 	 enum OPERATORS operator; //added operators to the union
 	 
 
-#line 269 "y.tab.c"
+#line 270 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -753,14 +754,14 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   115,   115,   121,   126,   134,   135,   138,   151,   156,
-     162,   168,   177,   178,   179,   182,   192,   197,   204,   208,
-     215,   221,   230,   239,   242,   250,   253,   261,   262,   263,
-     264,   265,   266,   267,   268,   271,   276,   283,   291,   303,
-     311,   315,   322,   329,   334,   341,   349,   352,   357,   365,
-     366,   375,   376,   377,   378,   379,   380,   383,   387,   396,
-     397,   400,   401,   410,   411,   412,   413,   416,   420,   425,
-     426,   427,   431,   435,   442,   451,   454,   461,   466
+       0,   116,   116,   122,   127,   135,   136,   139,   153,   172,
+     189,   208,   231,   232,   233,   236,   246,   251,   258,   262,
+     269,   275,   284,   293,   296,   304,   307,   315,   316,   317,
+     318,   319,   320,   321,   322,   325,   330,   337,   345,   357,
+     365,   369,   376,   383,   388,   395,   403,   406,   411,   419,
+     420,   429,   430,   431,   432,   433,   434,   437,   441,   450,
+     451,   454,   455,   464,   465,   466,   467,   470,   474,   479,
+     480,   481,   485,   489,   496,   505,   508,   515,   520
 };
 #endif
 
@@ -1410,295 +1411,348 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* Program: Declarationlist  */
-#line 116 "lab7.y"
+#line 117 "lab7.y"
                     {
 						program = (yyvsp[0].node);
 					}
-#line 1418 "y.tab.c"
+#line 1419 "y.tab.c"
     break;
 
   case 3: /* Declarationlist: Declaration  */
-#line 122 "lab7.y"
+#line 123 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_DEC_LIST); //Set the companion value to be a node with type A_DEC_LIST
 						(yyval.node)->s1 = (yyvsp[0].node); //Set s1 of the node to be the Declaration value
 					}
-#line 1427 "y.tab.c"
+#line 1428 "y.tab.c"
     break;
 
   case 4: /* Declarationlist: Declaration Declarationlist  */
-#line 127 "lab7.y"
+#line 128 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_DEC_LIST); //Set the companion value to be a node with type A_DEC_LIST;
 						(yyval.node)->s1 = (yyvsp[-1].node); //Set the s1 branch to be a Declaration
 						(yyval.node)->s2 = (yyvsp[0].node); //Set the s2 branch to be a Declarationlist
 					}
-#line 1437 "y.tab.c"
+#line 1438 "y.tab.c"
     break;
 
   case 5: /* Declaration: VarDeclaration  */
-#line 134 "lab7.y"
+#line 135 "lab7.y"
                                          {(yyval.node) = (yyvsp[0].node);}
-#line 1443 "y.tab.c"
+#line 1444 "y.tab.c"
     break;
 
   case 6: /* Declaration: FunDeclaration  */
-#line 135 "lab7.y"
+#line 136 "lab7.y"
                                                  {(yyval.node) = (yyvsp[0].node);}
-#line 1449 "y.tab.c"
+#line 1450 "y.tab.c"
     break;
 
   case 7: /* VarDeclaration: TypeSpecifier VarList ';'  */
-#line 139 "lab7.y"
+#line 140 "lab7.y"
                                         {
 						(yyval.node) = (yyvsp[-1].node);
 						ASTnode *p;
 						p = (yyvsp[-1].node);
 						while(p != NULL){
 							p->datatype = (yyvsp[-2].datatype);
+							p->symbol->Declared_Type = (yyvsp[-2].datatype);
 							p = p->s1;
 							}
 					}
-#line 1463 "y.tab.c"
+#line 1465 "y.tab.c"
     break;
 
   case 8: /* VarList: T_ID  */
-#line 152 "lab7.y"
+#line 154 "lab7.y"
                                                 {
-						(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
-						(yyval.node)->name = (yyvsp[0].string); //Set the name with the given ID
+							if (Search((yyvsp[0].string), LEVEL, 0) == NULL){
+								//Symbol not there, stick it in
+								(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+								(yyval.node)->name = (yyvsp[0].string); //Set the name with the given ID
+								//The prototype for insert for reference.
+								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
+								//Set p's symbol to be the node that is returned after inserting it into the symtable
+								(yyval.node)->symbol = Insert((yyvsp[0].string), A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
+								OFFSET++;
+							}
+							else{
+								yyerror((yyvsp[0].string));
+								yyerror("Already defined");
+								exit(1);
+							}
+
 						}
-#line 1472 "y.tab.c"
+#line 1488 "y.tab.c"
     break;
 
   case 9: /* VarList: T_ID '[' T_NUM ']'  */
-#line 157 "lab7.y"
-                                                {
-						(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
-						(yyval.node)->name = (yyvsp[-3].string); //Set the name to be the ID
-						(yyval.node)->value = (yyvsp[-1].num); //Set the value with the given NUM
+#line 173 "lab7.y"
+                                                {												
+							if (Search((yyvsp[-3].string), LEVEL, 0) == NULL){
+								(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+								(yyval.node)->name = (yyvsp[-3].string); //Set the name to be the ID
+								(yyval.node)->value = (yyvsp[-1].num); //Set the value with the given NUM
+								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
+								(yyval.node)->symbol = Insert((yyvsp[-3].string), A_UNKNOWN, SYM_ARRAY, LEVEL, (yyvsp[-1].num), OFFSET);
+								OFFSET += (yyvsp[-1].num);
+								//FIX ME -- MISSING
+							}
+							else{
+								yyerror((yyvsp[-3].string));
+								yyerror("Already defined");
+								exit(1);
+							}
 						}
-#line 1482 "y.tab.c"
-    break;
-
-  case 10: /* VarList: T_ID ',' VarList  */
-#line 163 "lab7.y"
-                                                {
-						(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
-						(yyval.node)->name = (yyvsp[-2].string); //Set the name with ID
-						(yyval.node)->s1 = (yyvsp[0].node); //Set the s1 branch to be another Varlist
-						}
-#line 1492 "y.tab.c"
-    break;
-
-  case 11: /* VarList: T_ID '[' T_NUM ']' ',' VarList  */
-#line 169 "lab7.y"
-                                                {
-						(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
-						(yyval.node)->name = (yyvsp[-5].string); //Set the name with the ID
-						(yyval.node)->value = (yyvsp[-3].num); //Set the value with the NUM
-						(yyval.node)->s1 = (yyvsp[0].node); //Set the s1 branch to be another Varlist.
-						}
-#line 1503 "y.tab.c"
-    break;
-
-  case 12: /* TypeSpecifier: T_INT  */
-#line 177 "lab7.y"
-                                {(yyval.datatype) = A_INTTYPE;}
 #line 1509 "y.tab.c"
     break;
 
+  case 10: /* VarList: T_ID ',' VarList  */
+#line 190 "lab7.y"
+                                                {
+							if (Search((yyvsp[-2].string), LEVEL, 0) == NULL){
+								(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+								(yyval.node)->name = (yyvsp[-2].string); //Set the name with ID
+								(yyval.node)->s1 = (yyvsp[0].node); //Set the s1 branch to be another Varlist
+
+								//The prototype for insert for reference.
+								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
+								
+								//Set p's symbol to be the node that is returned after inserting it into the symtable
+								(yyval.node)->symbol = Insert((yyvsp[-2].string), A_UNKNOWN, SYM_SCALAR, LEVEL, 1,(yyvsp[0].node)->symbol->offset);
+							}
+							else{
+								yyerror((yyvsp[-2].string));
+								yyerror("Already defined");
+								exit(1);
+							}
+						}
+#line 1532 "y.tab.c"
+    break;
+
+  case 11: /* VarList: T_ID '[' T_NUM ']' ',' VarList  */
+#line 209 "lab7.y"
+                                                {
+							if (Search((yyvsp[-5].string), LEVEL, 0) == NULL){
+								(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
+								(yyval.node)->name = (yyvsp[-5].string); //Set the name with the ID
+								(yyval.node)->value = (yyvsp[-3].num); //Set the value with the NUM
+								(yyval.node)->s1 = (yyvsp[0].node); //Set the s1 branch to be another Varlist.
+
+								//The prototype for insert for reference.
+								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
+								
+								//Set p's symbol to be the node that is returned after inserting it into the symtable
+								(yyval.node)->symbol = Insert((yyvsp[-5].string), A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
+								OFFSET += (yyvsp[-3].num);
+							}
+							else{
+								yyerror((yyvsp[-5].string));
+								yyerror("Already defined");
+								exit(1);
+							}
+						}
+#line 1557 "y.tab.c"
+    break;
+
+  case 12: /* TypeSpecifier: T_INT  */
+#line 231 "lab7.y"
+                                {(yyval.datatype) = A_INTTYPE;}
+#line 1563 "y.tab.c"
+    break;
+
   case 13: /* TypeSpecifier: T_VOID  */
-#line 178 "lab7.y"
+#line 232 "lab7.y"
                                                  {(yyval.datatype) = A_VOIDTYPE;}
-#line 1515 "y.tab.c"
+#line 1569 "y.tab.c"
     break;
 
   case 14: /* TypeSpecifier: T_BOOLEAN  */
-#line 179 "lab7.y"
+#line 233 "lab7.y"
                                                     {(yyval.datatype) = A_BOOLEANTYPE;}
-#line 1521 "y.tab.c"
+#line 1575 "y.tab.c"
     break;
 
   case 15: /* FunDeclaration: TypeSpecifier T_ID '(' Params ')' CompoundStmt  */
-#line 183 "lab7.y"
+#line 237 "lab7.y"
                                                 {
-						(yyval.node) = ASTCreateNode(A_FUNDEC);
-						(yyval.node)->name = (yyvsp[-4].string); //Setting the name with the ID
-						(yyval.node)->datatype = (yyvsp[-5].datatype); //Setting the datatype with the given TypeSpecifier
-						(yyval.node)->s1 = (yyvsp[-2].node); //FIX ME Setting the s1 branch to be the Params
-						(yyval.node)->s2 = (yyvsp[0].node); //Setting s2 branch to be the Compound statement
+							(yyval.node) = ASTCreateNode(A_FUNDEC);
+							(yyval.node)->name = (yyvsp[-4].string); //Setting the name with the ID
+							(yyval.node)->datatype = (yyvsp[-5].datatype); //Setting the datatype with the given TypeSpecifier
+							(yyval.node)->s1 = (yyvsp[-2].node); //Setting the s1 branch to be the Params
+							(yyval.node)->s2 = (yyvsp[0].node); //Setting s2 branch to be the Compound statement
 						}
-#line 1533 "y.tab.c"
+#line 1587 "y.tab.c"
     break;
 
   case 16: /* Params: T_VOID  */
-#line 193 "lab7.y"
+#line 247 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_PARAMS);
 						
 					}
-#line 1542 "y.tab.c"
+#line 1596 "y.tab.c"
     break;
 
   case 17: /* Params: ParamList  */
-#line 198 "lab7.y"
+#line 252 "lab7.y"
                                         {
 						(yyval.node) = (yyvsp[0].node);
 					}
-#line 1550 "y.tab.c"
+#line 1604 "y.tab.c"
     break;
 
   case 18: /* ParamList: Param  */
-#line 205 "lab7.y"
+#line 259 "lab7.y"
                                         {
 						(yyval.node) = (yyvsp[0].node);
 					}
-#line 1558 "y.tab.c"
+#line 1612 "y.tab.c"
     break;
 
   case 19: /* ParamList: Param ',' ParamList  */
-#line 209 "lab7.y"
+#line 263 "lab7.y"
                                         {
 						(yyval.node) = (yyvsp[-2].node);
 						(yyval.node)->s1 = (yyvsp[0].node);
 					}
-#line 1567 "y.tab.c"
+#line 1621 "y.tab.c"
     break;
 
   case 20: /* Param: TypeSpecifier T_ID  */
-#line 216 "lab7.y"
+#line 270 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_PARAM);
 						(yyval.node)->datatype = (yyvsp[-1].datatype);
 						(yyval.node)->name = (yyvsp[0].string);
 					}
-#line 1577 "y.tab.c"
+#line 1631 "y.tab.c"
     break;
 
   case 21: /* Param: TypeSpecifier T_ID '[' ']'  */
-#line 222 "lab7.y"
+#line 276 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_PARAM);
 						(yyval.node)->datatype = (yyvsp[-3].datatype);
 						(yyval.node)->name = (yyvsp[-2].string);
 						(yyval.node)->value = -1;
 					}
-#line 1588 "y.tab.c"
+#line 1642 "y.tab.c"
     break;
 
   case 22: /* CompoundStmt: T_BEGIN LocalDeclarations StatementList T_END  */
-#line 231 "lab7.y"
+#line 285 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_COMPOUND);
 						(yyval.node)->s1 = (yyvsp[-2].node);
 						(yyval.node)->s2 = (yyvsp[-1].node);
 					}
-#line 1598 "y.tab.c"
+#line 1652 "y.tab.c"
     break;
 
   case 23: /* LocalDeclarations: %empty  */
-#line 239 "lab7.y"
+#line 293 "lab7.y"
                                         {
 						(yyval.node) = NULL;
 					}
-#line 1606 "y.tab.c"
+#line 1660 "y.tab.c"
     break;
 
   case 24: /* LocalDeclarations: VarDeclaration LocalDeclarations  */
-#line 243 "lab7.y"
+#line 297 "lab7.y"
                                         {
 						(yyval.node) = (yyvsp[-1].node);
 						(yyval.node)->s2 = (yyvsp[0].node);
 					}
-#line 1615 "y.tab.c"
+#line 1669 "y.tab.c"
     break;
 
   case 25: /* StatementList: %empty  */
-#line 250 "lab7.y"
+#line 304 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_STATEMENTLIST);
 					}
-#line 1623 "y.tab.c"
+#line 1677 "y.tab.c"
     break;
 
   case 26: /* StatementList: Statement StatementList  */
-#line 254 "lab7.y"
+#line 308 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_STATEMENTLIST);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 						(yyval.node)->s2 = (yyvsp[0].node);
 					}
-#line 1633 "y.tab.c"
+#line 1687 "y.tab.c"
     break;
 
   case 27: /* Statement: ExpressionStmt  */
-#line 261 "lab7.y"
+#line 315 "lab7.y"
                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 1639 "y.tab.c"
+#line 1693 "y.tab.c"
     break;
 
   case 28: /* Statement: CompoundStmt  */
-#line 262 "lab7.y"
+#line 316 "lab7.y"
                                                       {(yyval.node) = (yyvsp[0].node);}
-#line 1645 "y.tab.c"
+#line 1699 "y.tab.c"
     break;
 
   case 29: /* Statement: SelectionStmt  */
-#line 263 "lab7.y"
+#line 317 "lab7.y"
                                                        {(yyval.node) = (yyvsp[0].node);}
-#line 1651 "y.tab.c"
+#line 1705 "y.tab.c"
     break;
 
   case 30: /* Statement: IterationStmt  */
-#line 264 "lab7.y"
+#line 318 "lab7.y"
                                                        {(yyval.node) = (yyvsp[0].node);}
-#line 1657 "y.tab.c"
+#line 1711 "y.tab.c"
     break;
 
   case 31: /* Statement: AssignmentStmt  */
-#line 265 "lab7.y"
+#line 319 "lab7.y"
                                                         {(yyval.node) = (yyvsp[0].node);}
-#line 1663 "y.tab.c"
+#line 1717 "y.tab.c"
     break;
 
   case 32: /* Statement: ReturnStmt  */
-#line 266 "lab7.y"
+#line 320 "lab7.y"
                                                     {(yyval.node) = (yyvsp[0].node);}
-#line 1669 "y.tab.c"
+#line 1723 "y.tab.c"
     break;
 
   case 33: /* Statement: ReadStmt  */
-#line 267 "lab7.y"
+#line 321 "lab7.y"
                                                   {(yyval.node) = (yyvsp[0].node);}
-#line 1675 "y.tab.c"
+#line 1729 "y.tab.c"
     break;
 
   case 34: /* Statement: WriteStmt  */
-#line 268 "lab7.y"
+#line 322 "lab7.y"
                                                    {(yyval.node) = (yyvsp[0].node);}
-#line 1681 "y.tab.c"
+#line 1735 "y.tab.c"
     break;
 
   case 35: /* ExpressionStmt: Expression ';'  */
-#line 272 "lab7.y"
+#line 326 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_EXPRESSIONSTMT);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 					}
-#line 1690 "y.tab.c"
+#line 1744 "y.tab.c"
     break;
 
   case 36: /* ExpressionStmt: ';'  */
-#line 277 "lab7.y"
+#line 331 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_EXPRESSIONSTMT);
 					}
-#line 1698 "y.tab.c"
+#line 1752 "y.tab.c"
     break;
 
   case 37: /* SelectionStmt: T_IF Expression T_THEN Statement T_ENDIF  */
-#line 284 "lab7.y"
+#line 338 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_IF);
 						(yyval.node)->s1 = (yyvsp[-3].node); //Set s1 branch of Selection to be the Expression
@@ -1706,11 +1760,11 @@ yyreduce:
 						p->s1 = (yyvsp[-1].node); //Set the A_IF s1 branch with the statement, other will be NULL since it's not an else
 						(yyval.node)->s2=p; //Set Selection statement's s2 to be the A_IF we created.
 					}
-#line 1710 "y.tab.c"
+#line 1764 "y.tab.c"
     break;
 
   case 38: /* SelectionStmt: T_IF Expression T_THEN Statement T_ELSE Statement T_ENDIF  */
-#line 292 "lab7.y"
+#line 346 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_IF);
 						(yyval.node)->s1 = (yyvsp[-5].node); //Set s1 branch of Selection to be the Expression
@@ -1720,324 +1774,324 @@ yyreduce:
 						(yyval.node)->s2=p; //Set Selection statement's s2 to be the A_IF we created.
 
 					}
-#line 1724 "y.tab.c"
+#line 1778 "y.tab.c"
     break;
 
   case 39: /* IterationStmt: T_WHILE Expression T_DO Statement  */
-#line 304 "lab7.y"
+#line 358 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_ITERATIONSTMT);
 						(yyval.node)->s1 = (yyvsp[-2].node);
 						(yyval.node)->s2 = (yyvsp[0].node);
 					}
-#line 1734 "y.tab.c"
+#line 1788 "y.tab.c"
     break;
 
   case 40: /* ReturnStmt: T_RETURN ';'  */
-#line 312 "lab7.y"
+#line 366 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_RETURNSTMT);
 					}
-#line 1742 "y.tab.c"
+#line 1796 "y.tab.c"
     break;
 
   case 41: /* ReturnStmt: T_RETURN Expression ';'  */
-#line 316 "lab7.y"
+#line 370 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_RETURNSTMT);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 					}
-#line 1751 "y.tab.c"
+#line 1805 "y.tab.c"
     break;
 
   case 42: /* ReadStmt: T_READ Var ';'  */
-#line 323 "lab7.y"
+#line 377 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_READ);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 					}
-#line 1760 "y.tab.c"
+#line 1814 "y.tab.c"
     break;
 
   case 43: /* WriteStmt: T_WRITE Expression ';'  */
-#line 330 "lab7.y"
+#line 384 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_WRITE);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 					}
-#line 1769 "y.tab.c"
+#line 1823 "y.tab.c"
     break;
 
   case 44: /* WriteStmt: T_WRITE T_STRING ';'  */
-#line 335 "lab7.y"
+#line 389 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_WRITE);
 						(yyval.node)->name = (yyvsp[-1].string);
 					}
-#line 1778 "y.tab.c"
+#line 1832 "y.tab.c"
     break;
 
   case 45: /* AssignmentStmt: Var '=' SimpleExpression ';'  */
-#line 342 "lab7.y"
+#line 396 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_ASSIGNMENTSTMT);
 						(yyval.node)->s1 = (yyvsp[-3].node);
 						(yyval.node)->s2 = (yyvsp[-1].node);
 					}
-#line 1788 "y.tab.c"
+#line 1842 "y.tab.c"
     break;
 
   case 46: /* Expression: SimpleExpression  */
-#line 349 "lab7.y"
+#line 403 "lab7.y"
                                                    {(yyval.node) = (yyvsp[0].node);}
-#line 1794 "y.tab.c"
+#line 1848 "y.tab.c"
     break;
 
   case 47: /* Var: T_ID  */
-#line 353 "lab7.y"
+#line 407 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_VAR);
 						(yyval.node)->name = (yyvsp[0].string);
 					}
-#line 1803 "y.tab.c"
+#line 1857 "y.tab.c"
     break;
 
   case 48: /* Var: T_ID '[' Expression ']'  */
-#line 358 "lab7.y"
+#line 412 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_VAR);
 						(yyval.node)->name = (yyvsp[-3].string);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 					}
-#line 1813 "y.tab.c"
+#line 1867 "y.tab.c"
     break;
 
   case 49: /* SimpleExpression: AdditiveExpression  */
-#line 365 "lab7.y"
+#line 419 "lab7.y"
                                              {(yyval.node) = (yyvsp[0].node);}
-#line 1819 "y.tab.c"
+#line 1873 "y.tab.c"
     break;
 
   case 50: /* SimpleExpression: SimpleExpression Relop AdditiveExpression  */
-#line 367 "lab7.y"
+#line 421 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_EXPR);
 						(yyval.node)->s1 = (yyvsp[-2].node);
 						(yyval.node)->s2 = (yyvsp[0].node);
 						(yyval.node)->operator = (yyvsp[-1].operator);
 					}
-#line 1830 "y.tab.c"
+#line 1884 "y.tab.c"
     break;
 
   case 51: /* Relop: T_LE  */
-#line 375 "lab7.y"
+#line 429 "lab7.y"
                                        {(yyval.operator) = A_LE;}
-#line 1836 "y.tab.c"
+#line 1890 "y.tab.c"
     break;
 
   case 52: /* Relop: '<'  */
-#line 376 "lab7.y"
+#line 430 "lab7.y"
                                               {(yyval.operator) = A_LESSTHAN;}
-#line 1842 "y.tab.c"
+#line 1896 "y.tab.c"
     break;
 
   case 53: /* Relop: '>'  */
-#line 377 "lab7.y"
+#line 431 "lab7.y"
                                               {(yyval.operator) = A_GREATERTHAN;}
-#line 1848 "y.tab.c"
+#line 1902 "y.tab.c"
     break;
 
   case 54: /* Relop: T_GE  */
-#line 378 "lab7.y"
+#line 432 "lab7.y"
                                                {(yyval.operator) = A_GE;}
-#line 1854 "y.tab.c"
+#line 1908 "y.tab.c"
     break;
 
   case 55: /* Relop: T_EQ  */
-#line 379 "lab7.y"
+#line 433 "lab7.y"
                                                {(yyval.operator) = A_EQ;}
-#line 1860 "y.tab.c"
-    break;
-
-  case 56: /* Relop: T_NE  */
-#line 380 "lab7.y"
-                                               {(yyval.operator) = A_NE;}
-#line 1866 "y.tab.c"
-    break;
-
-  case 57: /* AdditiveExpression: Term  */
-#line 384 "lab7.y"
-                                        {
-						(yyval.node) = (yyvsp[0].node);
-					}
-#line 1874 "y.tab.c"
-    break;
-
-  case 58: /* AdditiveExpression: AdditiveExpression Addop Term  */
-#line 388 "lab7.y"
-                                        {
-						(yyval.node) = ASTCreateNode(A_EXPR);
-						(yyval.node)->s1 = (yyvsp[-2].node);
-						(yyval.node)->s2 = (yyvsp[0].node);
-						(yyval.node)->operator = (yyvsp[-1].operator);
-					}
-#line 1885 "y.tab.c"
-    break;
-
-  case 59: /* Addop: '+'  */
-#line 396 "lab7.y"
-                                      {(yyval.operator) = A_PLUS;}
-#line 1891 "y.tab.c"
-    break;
-
-  case 60: /* Addop: '-'  */
-#line 397 "lab7.y"
-                                              {(yyval.operator) = A_MINUS;}
-#line 1897 "y.tab.c"
-    break;
-
-  case 61: /* Term: Factor  */
-#line 400 "lab7.y"
-                                         {(yyval.node) = (yyvsp[0].node);}
-#line 1903 "y.tab.c"
-    break;
-
-  case 62: /* Term: Term Multop Factor  */
-#line 402 "lab7.y"
-                                        {
-						(yyval.node) = ASTCreateNode(A_EXPR);
-						(yyval.node)->s1 = (yyvsp[-2].node);
-						(yyval.node)->s2 = (yyvsp[0].node);
-						(yyval.node)->operator = (yyvsp[-1].operator);
-					}
 #line 1914 "y.tab.c"
     break;
 
-  case 63: /* Multop: '*'  */
-#line 410 "lab7.y"
-                                      {(yyval.operator) = A_TIMES;}
+  case 56: /* Relop: T_NE  */
+#line 434 "lab7.y"
+                                               {(yyval.operator) = A_NE;}
 #line 1920 "y.tab.c"
     break;
 
+  case 57: /* AdditiveExpression: Term  */
+#line 438 "lab7.y"
+                                        {
+						(yyval.node) = (yyvsp[0].node);
+					}
+#line 1928 "y.tab.c"
+    break;
+
+  case 58: /* AdditiveExpression: AdditiveExpression Addop Term  */
+#line 442 "lab7.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_EXPR);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+						(yyval.node)->operator = (yyvsp[-1].operator);
+					}
+#line 1939 "y.tab.c"
+    break;
+
+  case 59: /* Addop: '+'  */
+#line 450 "lab7.y"
+                                      {(yyval.operator) = A_PLUS;}
+#line 1945 "y.tab.c"
+    break;
+
+  case 60: /* Addop: '-'  */
+#line 451 "lab7.y"
+                                              {(yyval.operator) = A_MINUS;}
+#line 1951 "y.tab.c"
+    break;
+
+  case 61: /* Term: Factor  */
+#line 454 "lab7.y"
+                                         {(yyval.node) = (yyvsp[0].node);}
+#line 1957 "y.tab.c"
+    break;
+
+  case 62: /* Term: Term Multop Factor  */
+#line 456 "lab7.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_EXPR);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+						(yyval.node)->operator = (yyvsp[-1].operator);
+					}
+#line 1968 "y.tab.c"
+    break;
+
+  case 63: /* Multop: '*'  */
+#line 464 "lab7.y"
+                                      {(yyval.operator) = A_TIMES;}
+#line 1974 "y.tab.c"
+    break;
+
   case 64: /* Multop: '/'  */
-#line 411 "lab7.y"
+#line 465 "lab7.y"
                                               {(yyval.operator) = A_DIVIDES;}
-#line 1926 "y.tab.c"
+#line 1980 "y.tab.c"
     break;
 
   case 65: /* Multop: T_AND  */
-#line 412 "lab7.y"
+#line 466 "lab7.y"
                                                 {(yyval.operator) = A_AND;}
-#line 1932 "y.tab.c"
+#line 1986 "y.tab.c"
     break;
 
   case 66: /* Multop: T_OR  */
-#line 413 "lab7.y"
+#line 467 "lab7.y"
                                                {(yyval.operator) = A_OR;}
-#line 1938 "y.tab.c"
+#line 1992 "y.tab.c"
     break;
 
   case 67: /* Factor: '(' Expression ')'  */
-#line 417 "lab7.y"
+#line 471 "lab7.y"
                                         {
 						(yyval.node) = (yyvsp[-1].node);
 					}
-#line 1946 "y.tab.c"
+#line 2000 "y.tab.c"
     break;
 
   case 68: /* Factor: T_NUM  */
-#line 421 "lab7.y"
+#line 475 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_NUM);
 						(yyval.node)->value = (yyvsp[0].num);
 					}
-#line 1955 "y.tab.c"
+#line 2009 "y.tab.c"
     break;
 
   case 69: /* Factor: Var  */
-#line 425 "lab7.y"
+#line 479 "lab7.y"
                                               {(yyval.node) = (yyvsp[0].node);}
-#line 1961 "y.tab.c"
+#line 2015 "y.tab.c"
     break;
 
   case 70: /* Factor: Call  */
-#line 426 "lab7.y"
+#line 480 "lab7.y"
                                                {(yyval.node) = (yyvsp[0].node);}
-#line 1967 "y.tab.c"
+#line 2021 "y.tab.c"
     break;
 
   case 71: /* Factor: T_TRUE  */
-#line 428 "lab7.y"
+#line 482 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_TRUE);
 					}
-#line 1975 "y.tab.c"
+#line 2029 "y.tab.c"
     break;
 
   case 72: /* Factor: T_FALSE  */
-#line 432 "lab7.y"
+#line 486 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_FALSE); 
 					}
-#line 1983 "y.tab.c"
+#line 2037 "y.tab.c"
     break;
 
   case 73: /* Factor: T_NOT Factor  */
-#line 436 "lab7.y"
+#line 490 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_NOT);
 						(yyval.node)->s1 = (yyvsp[0].node);
 					}
-#line 1992 "y.tab.c"
+#line 2046 "y.tab.c"
     break;
 
   case 74: /* Call: T_ID '(' Args ')'  */
-#line 443 "lab7.y"
+#line 497 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_CALL);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 						(yyval.node)->name = (yyvsp[-3].string);
 					}
-#line 2002 "y.tab.c"
+#line 2056 "y.tab.c"
     break;
 
   case 75: /* Args: %empty  */
-#line 451 "lab7.y"
+#line 505 "lab7.y"
                                         {
 						(yyval.node) = NULL;
 					}
-#line 2010 "y.tab.c"
+#line 2064 "y.tab.c"
     break;
 
   case 76: /* Args: ArgList  */
-#line 455 "lab7.y"
+#line 509 "lab7.y"
                                         {
 						(yyval.node) = (yyvsp[0].node);
 					}
-#line 2018 "y.tab.c"
+#line 2072 "y.tab.c"
     break;
 
   case 77: /* ArgList: Expression  */
-#line 462 "lab7.y"
+#line 516 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_ARGLIST);
 						(yyval.node)->s1 = (yyvsp[0].node);
 					}
-#line 2027 "y.tab.c"
+#line 2081 "y.tab.c"
     break;
 
   case 78: /* ArgList: Expression ',' ArgList  */
-#line 467 "lab7.y"
+#line 521 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_ARGLIST);
 						(yyval.node)->s1 = (yyvsp[-2].node);
 						(yyval.node)->s2 = (yyvsp[0].node);
 					}
-#line 2037 "y.tab.c"
+#line 2091 "y.tab.c"
     break;
 
 
-#line 2041 "y.tab.c"
+#line 2095 "y.tab.c"
 
       default: break;
     }
@@ -2230,7 +2284,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 475 "lab7.y"
+#line 529 "lab7.y"
 	/* end of rules, start of program */
 
 /*
