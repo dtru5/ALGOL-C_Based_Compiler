@@ -1,1 +1,3 @@
-int foo, bar[100], baz;
+int x,y;
+void bar,bar1;
+void baz[100],baz1;

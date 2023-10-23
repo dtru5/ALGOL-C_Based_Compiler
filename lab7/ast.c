@@ -134,7 +134,7 @@ void ASTprint(int level,ASTnode *p)
 
         case A_VARDEC : PT(level); //Added A_VARDEC, print out the level with function PT and the current level given. 
                         printf("Variable "); //Print out the variable with its given datatype and name.
-                        printf("%s ", DataTypeToString(p->datatype)); 
+                        printf("%s ", DataTypeToString(p->symbol->Declared_Type)); 
                         printf("%s",p->name);
                         if (p->value > 0){ //If the p value is greater than zero, then it is an array
                            printf("[%d]",p->value);

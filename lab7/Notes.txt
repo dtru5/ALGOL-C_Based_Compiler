@@ -9,3 +9,6 @@ echo -e "int foo;\nint foo;" | ./lab7.exe
 -The '-e' option tells 'echo' to interpret escape sequences, including '\n' (which is new line).
 
 - the '|' is to pipt it with lab7.
+
+The reason why Cooper gets the offset values to be left ot right is becuase insert is happening in VarDeclaration 
+and not in Varlist
