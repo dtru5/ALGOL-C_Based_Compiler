@@ -198,7 +198,7 @@ VarList 			: T_ID
 								
 								//Set p's symbol to be the node that is returned after inserting it into the symtable
 								$$->symbol = Insert($1, A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
-								OFFSET++;
+								OFFSET++; 
 							}
 							else{
 								yyerror($1);
@@ -218,7 +218,7 @@ VarList 			: T_ID
 								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
 								
 								//Set p's symbol to be the node that is returned after inserting it into the symtable
-								$$->symbol = Insert($1, A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
+								$$->symbol = Insert($1, A_UNKNOWN, SYM_ARRAY, LEVEL, $3, OFFSET);
 								OFFSET += $3;
 							}
 							else{
@@ -269,24 +269,44 @@ ParamList			: Param
 /* 9. A Param can be a TypeSpecifier followed by a T_ID or a TypeSpecifier followed by a T_ID open and close brackets */
 Param 				: TypeSpecifier T_ID 
 					{
-						$$ = ASTCreateNode(A_PARAM);
-						$$->datatype = $1;
-						$$->name = $2;
+						if(Search($2, 1, 0) == NULL){
+							$$ = ASTCreateNode(A_PARAM);
+							$$->datatype = $1;
+							$$->name = $2;
+							$$->symbol = Insert($2, $1, SYM_SCALAR, LEVEL+1, 1, OFFSET);
+							OFFSET++;
+						}
+						else{
+							yyerror($2);
+							yyerror("Parameter name already used.");
+							exit(1);
+						}
 					}
 					| TypeSpecifier T_ID '[' ']' 
 					{
-						$$ = ASTCreateNode(A_PARAM);
-						$$->datatype = $1;
-						$$->name = $2;
-						$$->value = -1;
+						if(Search($2, 1, 0) == NULL){
+							$$ = ASTCreateNode(A_PARAM);
+							$$->datatype = $1;
+							$$->name = $2;
+							$$->value = -1;
+							$$->symbol = Insert($2, $1, SYM_ARRAY, LEVEL+1, 1, OFFSET);
+							OFFSET++;
+						}
+						else{
+							yyerror($2);
+							yyerror("Parameter name already used.");
+							exit(1);
+						}
 					}
 					;
 /* 10. A CompoundStmt can be a T_BEGIN followed by LocalDeclarations, StatementList, and T_END */	
-CompoundStmt 		: T_BEGIN LocalDeclarations StatementList T_END
+CompoundStmt 		: T_BEGIN {LEVEL++;} LocalDeclarations StatementList T_END
 					{
 						$$ = ASTCreateNode(A_COMPOUND);
-						$$->s1 = $2;
-						$$->s2 = $3;
+						$$->s1 = $3;
+						$$->s2 = $4;
+						OFFSET -= Delete(LEVEL);
+						LEVEL--;
 					}
 					;
 /* 11. LocalDeclarations can be either empty or a VarDeclaration followed by a LocalDeclarations */

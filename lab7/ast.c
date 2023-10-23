@@ -173,12 +173,12 @@ void ASTprint(int level,ASTnode *p)
 
         case A_PARAM :  PT(level); //Added A_PARAM
                         printf("parameter ");
-                        if(p->value == -1){ //If the value of p is -1, then it is an array type and follow the syntax 
-                            printf("%s %s[]\n", DataTypeToString(p->datatype), p->name);
+                        printf("%s ", DataTypeToString(p->datatype));
+                        printf("%s", p->name);
+                        if(p->value = -1){
+                            printf("[]");
                         }
-                        else{ //Else, it is not an array type so we just print out the datatype and the name
-                            printf("%s %s\n", DataTypeToString(p->datatype), p->name);
-                        }
+                        printf(" with offset %d\n", p->symbol->offset);
                         ASTprint(level, p->s1); //Print the s1 branch
                         break;
 
