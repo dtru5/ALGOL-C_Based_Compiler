@@ -250,7 +250,7 @@ FunDeclaration 		: TypeSpecifier T_ID '('
 							else{
 								//BARF
 								yyerror($2);
-								yyerror("Cannot create function, name is use.");
+								yyerror("Cannot create function, name is use");
 								exit(1);
 							}
 						}
@@ -275,6 +275,7 @@ FunDeclaration 		: TypeSpecifier T_ID '('
 Params 				: T_VOID 
 					{
 						$$ = ASTCreateNode(A_PARAMS);
+						$$->datatype = T_VOID;
 						
 					}
 					| ParamList 
@@ -299,14 +300,14 @@ Param 				: TypeSpecifier T_ID
 					{
 						if(Search($2, 1, 0) == NULL){
 							$$ = ASTCreateNode(A_PARAM);
-							$$->datatype = $1;
 							$$->name = $2;
 							$$->symbol = Insert($2, $1, SYM_SCALAR, LEVEL+1, 1, OFFSET);
+							$$->datatype = $$->symbol->Declared_Type;
 							OFFSET++;
 						}
 						else{
 							yyerror($2);
-							yyerror("Parameter name already used.");
+							yyerror("Parameter name already used");
 							exit(1);
 						}
 					}
@@ -314,15 +315,15 @@ Param 				: TypeSpecifier T_ID
 					{
 						if(Search($2, 1, 0) == NULL){
 							$$ = ASTCreateNode(A_PARAM);
-							$$->datatype = $1;
 							$$->name = $2;
 							$$->value = -1;
 							$$->symbol = Insert($2, $1, SYM_ARRAY, LEVEL+1, 1, OFFSET);
+							$$->datatype = $$->symbol->Declared_Type;
 							OFFSET++;
 						}
 						else{
 							yyerror($2);
-							yyerror("Parameter name already used.");
+							yyerror("Parameter name already used");
 							exit(1);
 						}
 					}
@@ -446,6 +447,10 @@ WriteStmt 			: T_WRITE Expression ';'
 /* 20. A AssignmentStmt can be a Var followed by an equals sign, SimpleExpression, and a semicolon */		
 AssignmentStmt 		: Var '=' SimpleExpression ';'
 					{
+						if($1->datatype != $3->datatype){
+							yyerror("Assignment type mismatch");
+							exit(1);
+						}
 						$$ = ASTCreateNode(A_ASSIGNMENTSTMT);
 						$$->s1 = $1;
 						$$->s2 = $3;
@@ -463,18 +468,19 @@ Var 				: T_ID
 
 						if(p == NULL){
 							yyerror($1);
-							yyerror("Variable used but not defined.");
+							yyerror("Variable used but not defined");
 							exit(1);
 						}
 
 						if(p->SubType != SYM_SCALAR){
 							yyerror($1);
-							yyerror("Variable is wrong subtype, should be scalar.");
+							yyerror("Variable is wrong subtype, should be scalar");
 							exit(1);
 						}
 						$$ = ASTCreateNode(A_VAR);
 						$$->name = $1;
 						$$->symbol = p;
+						$$->datatype = p->Declared_Type;
 					}
 					| T_ID '[' Expression ']' 
 					{
@@ -485,13 +491,19 @@ Var 				: T_ID
 
 						if(p == NULL){
 							yyerror($1);
-							yyerror("Variable used but not defined.");
+							yyerror("Variable used but not defined");
 							exit(1);
 						}
 
 						if(p->SubType != SYM_ARRAY){
 							yyerror($1);
-							yyerror("Variable is wrong subtype, should be array.");
+							yyerror("Variable is wrong subtype, should be array");
+							exit(1);
+						}
+
+						if($3->datatype != p->Declared_Type){
+							yyerror($1);
+							yyerror("Index of array should be an integer");
 							exit(1);
 						}
 
@@ -499,16 +511,22 @@ Var 				: T_ID
 						$$->name = $1;
 						$$->s1 = $3;
 						$$->symbol = p;
+						$$->datatype = p->Declared_Type;
 					}
 					;	   
 /* 23. A SimpleExpression can be an AdditiveExpression or a SimpleExpression followed by a Relop and AdditiveExpression */		
 SimpleExpression 	: AdditiveExpression {$$ = $1;}
 					| SimpleExpression Relop AdditiveExpression
 					{
+						if($1->datatype != $3->datatype){
+							yyerror("Type mismatch on expression");
+							exit(1);
+						}
 						$$ = ASTCreateNode(A_EXPR);
 						$$->s1 = $1;
 						$$->s2 = $3;
 						$$->operator = $2;
+						$$->datatype = A_BOOLEANTYPE;
 					}
 					;
 /* 24. A Relop can be any of the following tokens below */			
@@ -526,10 +544,15 @@ AdditiveExpression 	: Term
 					}
 					| AdditiveExpression Addop Term 
 					{
+						if($1->datatype != $3->datatype){
+							yyerror("Type mismatch on expression");
+							exit(1);
+						}
 						$$ = ASTCreateNode(A_EXPR);
 						$$->s1 = $1;
 						$$->s2 = $3;
 						$$->operator = $2;
+						$$->datatype = $1->datatype;
 					}
 					; 
 /* 26. An Addop can be a plus sign or a minus sign */
@@ -540,10 +563,15 @@ Addop 				: '+' {$$ = A_PLUS;}
 Term 				: Factor {$$ = $1;}
      				| Term Multop Factor 
 					{
+						if($1->datatype != $3->datatype){
+							yyerror("Type mismatch on expression");
+							exit(1);
+						}
 						$$ = ASTCreateNode(A_EXPR);
 						$$->s1 = $1;
 						$$->s2 = $3;
 						$$->operator = $2;
+						$$->datatype = $1->datatype;
 					}
 					; 
 /* 28. A Multop can be any of the following tokens below */
@@ -561,21 +589,30 @@ Factor				: '(' Expression ')'
 					{
 						$$ = ASTCreateNode(A_NUM);
 						$$->value = $1;
+						$$->datatype = A_INTTYPE;
 					}
 					| Var {$$ = $1;}
 					| Call {$$ = $1;}
 					| T_TRUE 
 					{
 						$$ = ASTCreateNode(A_TRUE);
+						$$->datatype = A_BOOLEANTYPE;
 					}
 					| T_FALSE 
 					{
 						$$ = ASTCreateNode(A_FALSE); 
+						$$->datatype = A_BOOLEANTYPE;
 					}
 					| T_NOT Factor 
 					{
-						$$ = ASTCreateNode(A_NOT);
+						if($2->datatype != A_BOOLEANTYPE){
+							yyerror("NOT operator expects boolean");
+							exit(1);
+						}
+						$$ = ASTCreateNode(A_EXPR);
+						$$->operator = A_NOT;
 						$$->s1 = $2;
+						$$->datatype = $2->datatype;
 					}
 					;
 /* 30. A Call can be a T_ID followed by an open paranthesis, Args, and close paranthesis */			
@@ -608,6 +645,7 @@ Call 				: T_ID '(' Args ')'
 						$$->s1 = $3;
 						$$->name = $1;
 						$$->symbol = p;
+						$$->datatype = p->Declared_Type;
 					}
 					;
 /* 31. An Args can be empty or an ArgList */			

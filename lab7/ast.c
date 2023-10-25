@@ -325,6 +325,10 @@ void ASTprint(int level,ASTnode *p)
                                 printf("OR\n");
                                 break;
 
+                            case A_NOT:
+                                printf("NOT\n");
+                                break;
+
                             default:
                                 printf("unknown type in A_EXPR in ASTprint%d\n",p->operator);
                                 printf("Exiting ASTprint immediately\n");
@@ -355,11 +359,6 @@ void ASTprint(int level,ASTnode *p)
                         if(p->s2 != NULL){
                             ASTprint(level, p->s2);
                         }
-                        break;
-
-        case A_NOT :    PT(level);
-                        printf("Expression operator: NOT\n");
-                        ASTprint(level+1, p->s1);
                         break;
 
         case A_TRUE :   PT(level);

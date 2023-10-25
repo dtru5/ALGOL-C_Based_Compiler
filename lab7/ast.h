@@ -87,7 +87,6 @@ enum ASTtype {
    A_CALL, //Added A_CALL
    A_ARGLIST, //Added A_ARGLIST
    A_PARAMS, //Added A_PARAMS
-   A_NOT, //Added A_NOT
    A_TRUE, //Added A_TRUE
    A_FALSE, //Added A_FALSE
    A_RETURNSTMT, //Added A_RETURNSTMT
@@ -116,7 +115,8 @@ enum OPERATORS {
    A_NE,
    A_DIVIDES,
    A_AND,
-   A_OR
+   A_OR,
+   A_NOT
  
 };
 
