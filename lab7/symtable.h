@@ -54,6 +54,7 @@ struct SymbTab * Insert(char *name, enum DataTypes my_assigned_type , enum  SYMB
 
 struct SymbTab * Search(char name[], int level, int recur );
 
+int check_params(ASTnode *formal, ASTnode *actual);
 
 static struct SymbTab *first=NULL;   /* global pointers into the symbol table */
 

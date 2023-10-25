@@ -84,6 +84,7 @@ ASTnode *ASTCreateNode(enum ASTtype mytype)
     p->s2=NULL;
     p->value=0;
     p->name = NULL;
+    p->symbol = NULL;
     return(p);
 }
 
@@ -343,6 +344,8 @@ void ASTprint(int level,ASTnode *p)
                         PT(level + 1);
                         printf("(\n");
                         ASTprint(level+2, p->s1);
+                        PT(level + 1);
+                        printf(")\n");
                         break;
 
         case A_ARGLIST :

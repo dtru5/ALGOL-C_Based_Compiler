@@ -189,18 +189,55 @@ int Delete(int level)
     return(SIZE);
 }
 
-// PRE:  No input
-// POST:  boolen if table has a PROTOTYPE in it
-int Has_Proto()
-{
-   struct SymbTab *p = first;
-   while (p != NULL)
-    {
-        if (p->SubType == SYM_FUNCTION_PROTO) return 1;
-        p = p->next;
-    }
-   return 0;
-
+  // PRE:  No input
+  // POST:  boolen if table has a PROTOTYPE in it
+  int Has_Proto()
+  {
+    struct SymbTab *p = first;
+    while (p != NULL)
+      {
+          if (p->SubType == SYM_FUNCTION_PROTO) return 1;
+          p = p->next;
+      }
+    return 0;
 }
+
+  int check_params(ASTnode *formal, ASTnode *actual){
+    // if(actual->nodetype == A_PARAMS && formal == NULL){
+    //   printf("VOID TYPE MATCHES\n");
+    //   return 1;
+    // }
+
+    // if(actual->datatype == A_INTTYPE && formal->nodetype == A_NUM){
+    //   printf("INT TYPE MATCHES\n");
+    //   return 1;
+    // }
+
+    //For void type
+    if(formal->nodetype == A_PARAMS && actual == NULL){
+      return 1;
+    }
+
+    //If both nodes have reached the end of their list at the same time.
+    if(formal->s1 == NULL && actual->s2 == NULL){
+       if(formal->datatype == A_INTTYPE && actual->nodetype == A_NUM){
+         return 1;
+       }
+
+      if(formal->symbol->Declared_Type == A_INTTYPE && actual->s1->symbol->Declared_Type == A_INTTYPE){
+        return 1;
+      }
+    }
+
+    if(formal->s1 == NULL || actual->s2 == NULL){
+      return 0;
+    }
+
+    // if(formal->datatype == A_INTTYPE && !(actual->nodetype == A_NUM || actual->symbol->Declared_Type == A_INTTYPE)){
+    //   return 0;
+    // }
+
+    return check_params(formal->s1, actual->s2);
+  }
 
 

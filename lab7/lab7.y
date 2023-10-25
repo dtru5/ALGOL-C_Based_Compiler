@@ -456,15 +456,49 @@ Expression 			: SimpleExpression {$$ = $1;}
 					;
 /* 22. A Var can be a T_ID or a T_ID followed by an open bracket, Expression, close bracket */		
 Var 				: T_ID 
-					{
+					{	//If ID is not there then BARF
+						//If it is the wrong subtype then BARF
+						struct SymbTab *p;
+						p = Search($1, LEVEL, 1);
+
+						if(p == NULL){
+							yyerror($1);
+							yyerror("Variable used but not defined.");
+							exit(1);
+						}
+
+						if(p->SubType != SYM_SCALAR){
+							yyerror($1);
+							yyerror("Variable is wrong subtype, should be scalar.");
+							exit(1);
+						}
 						$$ = ASTCreateNode(A_VAR);
 						$$->name = $1;
+						$$->symbol = p;
 					}
 					| T_ID '[' Expression ']' 
 					{
+						//If ID is not there then BARF
+						//If it is the wrong subtype then BARF
+						struct SymbTab *p;
+						p = Search($1, LEVEL, 1);
+
+						if(p == NULL){
+							yyerror($1);
+							yyerror("Variable used but not defined.");
+							exit(1);
+						}
+
+						if(p->SubType != SYM_ARRAY){
+							yyerror($1);
+							yyerror("Variable is wrong subtype, should be array.");
+							exit(1);
+						}
+
 						$$ = ASTCreateNode(A_VAR);
 						$$->name = $1;
 						$$->s1 = $3;
+						$$->symbol = p;
 					}
 					;	   
 /* 23. A SimpleExpression can be an AdditiveExpression or a SimpleExpression followed by a Relop and AdditiveExpression */		
@@ -547,9 +581,33 @@ Factor				: '(' Expression ')'
 /* 30. A Call can be a T_ID followed by an open paranthesis, Args, and close paranthesis */			
 Call 				: T_ID '(' Args ')' 
 					{
+						//Check if it is in the symtable
+						struct SymbTab *p;
+						p = Search($1, 0, 0);
+						if(p == NULL){
+							yyerror($1);
+							yyerror("Function is used but not in table");
+							exit(1);
+						}
+
+						//Check is symbol is a function
+						if(p->SubType != SYM_FUNCTION){
+							yyerror($1);
+							yyerror("Function name is not defined as a function");
+							exit(1);
+						}
+
+						//Check to see if actual and formals match in length and type.
+						if(check_params(p->fparms, $3) == 0){
+							yyerror($1);
+							yyerror("Parameter usage is incorrect");
+							exit(1);
+						}
+
 						$$ = ASTCreateNode(A_CALL);
 						$$->s1 = $3;
 						$$->name = $1;
+						$$->symbol = p;
 					}
 					;
 /* 31. An Args can be empty or an ArgList */			
