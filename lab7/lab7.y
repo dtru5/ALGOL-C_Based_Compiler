@@ -62,6 +62,8 @@ int yylex();
 int LEVEL = 0; //How many compound statements deep we're in.
 int OFFSET = 0; //How many words have we seen at GLOBAL or inside a function.
 int GOFFSET; //Holder for global offset when we enter and exit a fucntion definition.
+int maxoffset; //Total number of words a function needs
+
 extern int lineno; //Global variable for line number counter.
 extern ASTnode * program; //Brought over program from ast.c
 
@@ -178,7 +180,6 @@ VarList 			: T_ID
 								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
 								$$->symbol = Insert($1, A_UNKNOWN, SYM_ARRAY, LEVEL, $3, OFFSET);
 								OFFSET += $3;
-								//FIX ME -- MISSING
 							}
 							else{
 								yyerror($1);
@@ -234,13 +235,40 @@ TypeSpecifier   	: T_INT {$$ = A_INTTYPE;}
 					| T_BOOLEAN {$$ = A_BOOLEANTYPE;}
 					;
 /* 6. A FunDeclaration can be a TypeSpecifier followed by a T_ID, open parenthesis, Params, close parenthesis, and a CompoundStmt */		
-FunDeclaration 		: TypeSpecifier T_ID '(' Params ')' CompoundStmt 
+FunDeclaration 		: TypeSpecifier T_ID '('
+						{
+							//Check to see if function name is known, if it is barf.
+							//else install it in the symbol table.
+							//manage offset value.
+							if(Search($2,LEVEL, 0) == NULL){
+								//insert
+								Insert($2, $1, SYM_FUNCTION, LEVEL, 0, 0);
+								GOFFSET = OFFSET;
+								OFFSET = 2;
+								maxoffset = OFFSET;
+							}
+							else{
+								//BARF
+								yyerror($2);
+								yyerror("Cannot create function, name is use.");
+								exit(1);
+							}
+						}
+						Params ')'
+						{
+							//Update symtable with parameter
+							//Allow us to have recursive functions.
+							Search($2, LEVEL, 0)->fparms = $5;
+						} 
+						CompoundStmt 
 						{
 							$$ = ASTCreateNode(A_FUNDEC);
 							$$->name = $2; //Setting the name with the ID
 							$$->datatype = $1; //Setting the datatype with the given TypeSpecifier
-							$$->s1 = $4; //Setting the s1 branch to be the Params
-							$$->s2 = $6; //Setting s2 branch to be the Compound statement
+							$$->s1 = $5; //Setting the s1 branch to be the Params
+							$$->s2 = $8; //Setting s2 branch to be the Compound statement
+							$$->symbol = Search($2, LEVEL, 0);
+							$$->symbol->offset = maxoffset;
 						}
 					;
 /* 7. A Params can be a T_VOID or a ParamList */		
@@ -305,6 +333,9 @@ CompoundStmt 		: T_BEGIN {LEVEL++;} LocalDeclarations StatementList T_END
 						$$ = ASTCreateNode(A_COMPOUND);
 						$$->s1 = $3;
 						$$->s2 = $4;
+						if(OFFSET > maxoffset){
+							maxoffset = OFFSET;
+						}
 						OFFSET -= Delete(LEVEL);
 						LEVEL--;
 					}
@@ -555,5 +586,6 @@ Postconditions: yyparse is called and main exits.
 */
 int main(){ 
 	yyparse();
+	Display();
 	ASTprint(0, program);	
 } //End of main
