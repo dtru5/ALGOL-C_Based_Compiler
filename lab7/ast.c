@@ -139,10 +139,10 @@ void ASTprint(int level,ASTnode *p)
                         printf("%s",p->name);
                         if (p->value > 0){ //If the p value is greater than zero, then it is an array
                            printf("[%d]",p->value);
-                           printf(" with offset %d", p->symbol->offset);
+                           printf(" with offset %d and level %d", p->symbol->offset, p->symbol->level);
                         }
                         else{
-                            printf(" with offset %d", p->symbol->offset);
+                            printf(" with offset %d and level %d", p->symbol->offset, p->symbol->level);
                         }
                         printf("\n");
 		                ASTprint(level,p->s1); //Print out the s1 from p
@@ -180,7 +180,7 @@ void ASTprint(int level,ASTnode *p)
                         if(p->value == -1){
                             printf("[]");
                         }
-                        printf(" with offset %d\n", p->symbol->offset);
+                        printf(" with offset %d and level %d\n", p->symbol->offset, p->symbol->level);
                         ASTprint(level, p->s1); //Print the s1 branch
                         break;
 
