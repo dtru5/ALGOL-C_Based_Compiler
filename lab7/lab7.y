@@ -274,9 +274,7 @@ FunDeclaration 		: TypeSpecifier T_ID '('
 /* 7. A Params can be a T_VOID or a ParamList */		
 Params 				: T_VOID 
 					{
-						$$ = ASTCreateNode(A_PARAMS);
-						$$->datatype = T_VOID;
-						
+						$$ = NULL;
 					}
 					| ParamList 
 					{
@@ -337,6 +335,7 @@ CompoundStmt 		: T_BEGIN {LEVEL++;} LocalDeclarations StatementList T_END
 						if(OFFSET > maxoffset){
 							maxoffset = OFFSET;
 						}
+						Display();
 						OFFSET -= Delete(LEVEL);
 						LEVEL--;
 					}
@@ -454,6 +453,7 @@ AssignmentStmt 		: Var '=' SimpleExpression ';'
 						$$ = ASTCreateNode(A_ASSIGNMENTSTMT);
 						$$->s1 = $1;
 						$$->s2 = $3;
+						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					;	
 /* 21. An Expression can be a SimpleExpression */		
@@ -527,6 +527,7 @@ SimpleExpression 	: AdditiveExpression {$$ = $1;}
 						$$->s2 = $3;
 						$$->operator = $2;
 						$$->datatype = A_BOOLEANTYPE;
+						$$->symbol = Insert(CreateTemp(), $$->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					;
 /* 24. A Relop can be any of the following tokens below */			
@@ -664,12 +665,14 @@ ArgList 			: Expression
 					{
 						$$ = ASTCreateNode(A_ARGLIST);
 						$$->s1 = $1;
+						$$->symbol = Insert(CreateTemp(), $$->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					| Expression ',' ArgList
 					{
 						$$ = ASTCreateNode(A_ARGLIST);
 						$$->s1 = $1;
 						$$->s2 = $3;
+						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					;
 			

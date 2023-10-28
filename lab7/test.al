@@ -1,23 +1,31 @@
-int x;
-int z;
-int f( int x, int z[])
-   begin
-          int y;
-          begin
-             int y;
-          end
-      end
-int t;
-
-int main (void)
+int foo(int y)
 begin
-   int n, p;
-   boolean m;
-   void j;
-   //f(m,1); checking boolean mismatch
-   //f(j,4); checking void mismatch
-   //f(n, j); //checking void checking with 2nd param
-   f(n,p); //checking two int variables
-   f(5,29); //checking two int nums
+end
 
+int bar(void)
+begin
+end
+
+int baz(boolean p)
+begin
+end
+
+int main(int z[], void y)
+begin
+   boolean n;
+   int x;
+   int p;
+   foo(5);
+   foo(x);
+   bar();
+   baz(n);
+   foo(23);
+   p = 3 + 9;
+   p = 2/9;
+   p = x;
+   //y * 1;
+   //y*x;
+   z[1];
+   z[8+2*2];
+   z[x];
 end

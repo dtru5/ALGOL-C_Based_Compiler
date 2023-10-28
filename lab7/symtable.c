@@ -206,25 +206,25 @@ int Delete(int level)
   PRE: Two lists that represent formals and actuals
   POST: if they are the same length, each elemnt is type consistent and 0 otherwise.
   */
-  int check_params(ASTnode *formal, ASTnode *actual){
+int check_params(ASTnode *formal, ASTnode *actual) {
 
-    //For void type
-    if(formal->nodetype == A_PARAMS && actual == NULL){
+      //If both nodes have reached the end of their list at the same time.
+    if(formal == NULL && actual == NULL){
       return 1;
     }
 
-    if(!(formal->datatype == A_INTTYPE && (actual->s1->nodetype == A_NUM || actual->s1->symbol->Declared_Type == A_INTTYPE))) return 0;
-
-    //If both nodes have reached the end of their list at the same time.
-    if(formal->s1 == NULL && actual->s2 == NULL){
-      return 1;
-    }
-
-    if(formal->s1 == NULL || actual->s2 == NULL){
+    if(formal == NULL || actual == NULL){
       return 0;
     }
 
+    if((formal->symbol->Declared_Type != actual->s1->datatype)){
+      return 0;
+    }
+
+    // Recursively check the rest of the parameters
     return check_params(formal->s1, actual->s2);
-  }
+}
+
+
 
 

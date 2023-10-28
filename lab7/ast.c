@@ -154,15 +154,16 @@ void ASTprint(int level,ASTnode *p)
                         printf("Function "); //Print out the function's datatype and name
                         printf("%s ", DataTypeToString(p->datatype));
                         printf("%s",p->name);
-                        printf(" offset %d", p->symbol->offset);
-                        if(p->s1->name == NULL){ //If the name is void, then print out VOID for the param
+                        if(p->s1 == NULL){ //If the name is void, then print out VOID for the param
                         /*
                         This works because in the YACC code, if the node type is A_PARAMS, then the name will but null,
                         but if it's not T_VOID, then an A_PARAM vode will be created and has a name.
                         */
-                            printf("(VOID)\n");
+                            printf("(VOID)");
+                            printf(" offset %d\n", p->symbol->offset);
                         }
                         else{ //Else, print out the () and within that print out s1.
+                            printf(" offset %d\n", p->symbol->offset);
                             printf("\n");
                             PT(level + 1);
                             printf("(\n");
