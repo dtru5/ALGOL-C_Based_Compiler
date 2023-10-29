@@ -96,10 +96,10 @@ enum ASTtype {
 };
 
 enum DataTypes {
+   A_UNKNOWN, //Added A_UNKNOWN to help us with labeling types that aren't yet defined.
    A_INTTYPE,
    A_VOIDTYPE,
-   A_BOOLEANTYPE,
-   A_UNKNOWN //Added A_UNKNOWN to help us with labeling types that aren't yet defined.
+   A_BOOLEANTYPE
 };
 
 enum OPERATORS {

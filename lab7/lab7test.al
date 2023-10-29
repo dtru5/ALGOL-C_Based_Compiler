@@ -4,7 +4,6 @@ int p(void)
 begin
 end
 
-
 int f(int b)
 begin 
  int y;

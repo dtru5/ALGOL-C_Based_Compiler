@@ -160,10 +160,10 @@ void ASTprint(int level,ASTnode *p)
                         but if it's not T_VOID, then an A_PARAM vode will be created and has a name.
                         */
                             printf("(VOID)");
-                            printf(" offset %d\n", p->symbol->offset);
+                            printf(" size %d\n", p->symbol->offset);
                         }
                         else{ //Else, print out the () and within that print out s1.
-                            printf(" offset %d\n", p->symbol->offset);
+                            printf(" size %d\n", p->symbol->offset);
                             printf("\n");
                             PT(level + 1);
                             printf("(\n");
