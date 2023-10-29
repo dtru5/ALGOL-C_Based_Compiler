@@ -270,6 +270,7 @@ FunDeclaration 		: TypeSpecifier T_ID '('
 							$$->s2 = $8; //Setting s2 branch to be the Compound statement
 							$$->symbol = Search($2, LEVEL, 0);
 							$$->symbol->offset = maxoffset;
+							OFFSET = GOFFSET;
 						}
 					;
 /* 7. A Params can be a T_VOID or a ParamList */		
