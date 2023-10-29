@@ -542,6 +542,7 @@ Relop 				: T_LE {$$ = A_LE;}
 AdditiveExpression 	: Term 
 					{
 						$$ = $1;
+						//$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					| AdditiveExpression Addop Term 
 					{
@@ -554,6 +555,7 @@ AdditiveExpression 	: Term
 						$$->s2 = $3;
 						$$->operator = $2;
 						$$->datatype = $1->datatype;
+						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					; 
 /* 26. An Addop can be a plus sign or a minus sign */
@@ -573,6 +575,7 @@ Term 				: Factor {$$ = $1;}
 						$$->s2 = $3;
 						$$->operator = $2;
 						$$->datatype = $1->datatype;
+						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					; 
 /* 28. A Multop can be any of the following tokens below */
@@ -665,7 +668,7 @@ ArgList 			: Expression
 					{
 						$$ = ASTCreateNode(A_ARGLIST);
 						$$->s1 = $1;
-						$$->symbol = Insert(CreateTemp(), $$->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
+						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					| Expression ',' ArgList
 					{

@@ -205,7 +205,7 @@ void ASTprint(int level,ASTnode *p)
                         break;
 
         case A_VAR :    PT(level); //Added A_VAR
-                        printf("VAR with name %s\n", p->name); //Print out the Var's name
+                        printf("VAR with name %s with offset %d and level %d\n", p->name, p->symbol->offset, p->symbol->level); //Print out the Var's name
                         if(p->s1 != NULL){ //If s1 is not empty, then print out s1
                             PT(level+1);
                             printf("[\n");
