@@ -34,6 +34,9 @@
 	In summary, this lab's primary objective is to equip the compiler with the capability to manage
 	symbol tables effectively, perform rudimentary type checking, and handle scope management. These enhancements aim to 
 	improve the compiler's code generation process, making it more robust and reliable.
+
+   Changes made:
+      -Added A_UNKNOWN to datatypes to handle VarList when the type is not immediately set in YACC.
 */
 
 #include<stdio.h>

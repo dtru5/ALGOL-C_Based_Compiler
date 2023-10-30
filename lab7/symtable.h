@@ -42,6 +42,9 @@
 	In summary, this lab's primary objective is to equip the compiler with the capability to manage
 	symbol tables effectively, perform rudimentary type checking, and handle scope management. These enhancements aim to 
 	improve the compiler's code generation process, making it more robust and reliable.
+
+    Changes made:
+        -Added check_params() declaration.
 */  
 
 
@@ -57,7 +60,6 @@ enum  SYMBOL_SUBTYPE
    SYM_FUNCTION_PROTO,
    SYM_FUNCTION_PRE,
    SYM_ARRAY
-   // missing for array as parameter
 };
 
 void Display();

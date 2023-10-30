@@ -27,6 +27,12 @@
 	In summary, this lab's primary objective is to equip the compiler with the capability to manage
 	symbol tables effectively, perform rudimentary type checking, and handle scope management. These enhancements aim to 
 	improve the compiler's code generation process, making it more robust and reliable.
+
+	Changes made:
+		-Added 4 global variables: LEVEL, OFFSET, GOFFSET (Global offset), and maxoffset.
+		-Incorporated semantic actions to check if symbols exist or not for production rules that handle
+		declarations, usage of variables and parameters; as well as to see if types of expressions share the 
+		same datatype as their usage/calls.
 */
 
 
@@ -427,14 +433,15 @@ WriteStmt 			: T_WRITE Expression ';'
 /* 20. A AssignmentStmt can be a Var followed by an equals sign, SimpleExpression, and a semicolon */		
 AssignmentStmt 		: Var '=' SimpleExpression ';'
 					{
-						if($1->datatype != $3->datatype){
+						if($1->datatype != $3->datatype){ //If the datatypes don't match, then exit
 							yyerror("Assignment type mismatch");
 							exit(1);
 						}
 						$$ = ASTCreateNode(A_ASSIGNMENTSTMT);
 						$$->s1 = $1;
 						$$->s2 = $3;
-						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
+						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++); //Set the symbol to be the returned symtab 
+						//from Insert() and setting the name to be a value produced by CreateTemp.
 					}
 					;	
 /* 21. An Expression can be a SimpleExpression */		
@@ -444,62 +451,60 @@ Expression 			: SimpleExpression {$$ = $1;}
 Var 				: T_ID 
 					{	//If ID is not there then BARF
 						//If it is the wrong subtype then BARF
-						struct SymbTab *p;
-						p = Search($1, LEVEL, 1);
+						struct SymbTab *p; //Create a SymbTab pointer called p
+						p = Search($1, LEVEL, 1); //Set p to be the search value of the T_ID
 
-						if(p == NULL){
+						if(p == NULL){ //If p is NULL, then exit.
 							yyerror($1);
 							yyerror("Variable used but not defined");
 							exit(1);
 						}
 
-						if(p->SubType != SYM_SCALAR){
+						if(p->SubType != SYM_SCALAR){ //If the subtype is not a scalar, then exit
 							yyerror($1);
 							yyerror("Variable is wrong subtype, should be scalar");
 							exit(1);
 						}
-						$$ = ASTCreateNode(A_VAR);
-						$$->name = $1;
-						$$->symbol = p;
-						$$->datatype = p->Declared_Type;
+						$$ = ASTCreateNode(A_VAR); //Set the node to be an A_VAR 
+						$$->name = $1; //Set the node's name to be the T_ID
+						$$->symbol = p; //Set the node's symbol to be p
+						$$->datatype = p->Declared_Type; //Set the data type to be p's declared type.
 					}
 					| T_ID '[' Expression ']' 
 					{
-						//If ID is not there then BARF
-						//If it is the wrong subtype then BARF
-						struct SymbTab *p;
-						p = Search($1, LEVEL, 1);
+						struct SymbTab *p;//Create a SymbTab pointer called p
+						p = Search($1, LEVEL, 1);//Set p to be the search value of the T_ID
 
-						if(p == NULL){
+						if(p == NULL){ //If p is NULL, then exit
 							yyerror($1);
 							yyerror("Variable used but not defined");
 							exit(1);
 						}
 
-						if(p->SubType != SYM_ARRAY){
+						if(p->SubType != SYM_ARRAY){ //If the subtype is not array type, then exit
 							yyerror($1);
 							yyerror("Variable is wrong subtype, should be array");
 							exit(1);
 						}
 
-						if($3->datatype != p->Declared_Type){
+						if($3->datatype != p->Declared_Type){ //if the datatype doesn't match the declared type, then exit
 							yyerror($1);
 							yyerror("Index of array should be an integer");
 							exit(1);
 						}
 
-						$$ = ASTCreateNode(A_VAR);
-						$$->name = $1;
-						$$->s1 = $3;
-						$$->symbol = p;
-						$$->datatype = p->Declared_Type;
+						$$ = ASTCreateNode(A_VAR); //Set the node to be an A_VAR 
+						$$->name = $1; //Set name to be T_ID
+						$$->s1 = $3; //Set the s1 branch to be the Expression
+						$$->symbol = p; //Set the node's symbol to be p.
+						$$->datatype = p->Declared_Type; //Set the node's datatype with p's declared typed
 					}
 					;	   
 /* 23. A SimpleExpression can be an AdditiveExpression or a SimpleExpression followed by a Relop and AdditiveExpression */		
 SimpleExpression 	: AdditiveExpression {$$ = $1;}
 					| SimpleExpression Relop AdditiveExpression
 					{
-						if($1->datatype != $3->datatype){
+						if($1->datatype != $3->datatype){ //If the data types don't match for simple and additive expression, then exit.
 							yyerror("Type mismatch on expression");
 							exit(1);
 						}
@@ -508,7 +513,8 @@ SimpleExpression 	: AdditiveExpression {$$ = $1;}
 						$$->s2 = $3;
 						$$->operator = $2; //Set the operator to be the Relop ops
 						$$->datatype = A_BOOLEANTYPE; //Set the datatype to be type boolean
-						$$->symbol = Insert(CreateTemp(), $$->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
+						$$->symbol = Insert(CreateTemp(), $$->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++); //Set the node's symbol to be the 
+						//returned pointer symtab using the CreateTemp for the name.
 					}
 					;
 /* 24. A Relop can be any of the following tokens below */			
@@ -523,20 +529,21 @@ Relop 				: T_LE {$$ = A_LE;}
 AdditiveExpression 	: Term 
 					{
 						$$ = $1;
-						//$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					| AdditiveExpression Addop Term 
 					{
+						//If the datatype's don't match between Additive Expression and Term, then exit.
 						if($1->datatype != $3->datatype){
 							yyerror("Type mismatch on expression");
 							exit(1);
 						}
-						$$ = ASTCreateNode(A_EXPR);
-						$$->s1 = $1;
-						$$->s2 = $3;
-						$$->operator = $2;
-						$$->datatype = $1->datatype;
-						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
+						$$ = ASTCreateNode(A_EXPR); //Set the node to be an A_EXPR node.
+						$$->s1 = $1; //Set the s1 branch to be an AdditiveExpression 
+						$$->s2 = $3; //Set the s2 branch to be the Term
+						$$->operator = $2; //Set the node's operator to be the Addop ops.
+						$$->datatype = $1->datatype; //Set the datatype of the node to be the datatype of AdditiveExpression
+						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++); //Set the nodes symbol
+						//with the returned pointer from Insert() giving the name a CreateTemp name.
 					}
 					; 
 /* 26. An Addop can be a plus sign or a minus sign */
@@ -547,16 +554,18 @@ Addop 				: '+' {$$ = A_PLUS;}
 Term 				: Factor {$$ = $1;}
      				| Term Multop Factor 
 					{
+						//If the datatype's between Term and Factor don't match, then exit.
 						if($1->datatype != $3->datatype){
 							yyerror("Type mismatch on expression");
 							exit(1);
 						}
-						$$ = ASTCreateNode(A_EXPR);
-						$$->s1 = $1;
-						$$->s2 = $3;
-						$$->operator = $2;
-						$$->datatype = $1->datatype;
-						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
+						$$ = ASTCreateNode(A_EXPR); //Set the node to be an A_EXPR
+						$$->s1 = $1; //Set the s1 branch to be Term
+						$$->s2 = $3; //Set the s2  branch to be Factor
+						$$->operator = $2; //Set the node's operator to be a Multop
+						$$->datatype = $1->datatype; //Set the node's datatype to be the datatype from Term
+						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++); //Set the node's symbol
+						//with the returned pointer from Insert() giving the name a CreateTemp name.
 					}
 					; 
 /* 28. A Multop can be any of the following tokens below */
@@ -568,44 +577,46 @@ Multop 				: '*' {$$ = A_TIMES;}
 /* 29. A Factor can be an open paranthesis followed by an Expression and close paranthesis or any of the tokens or productions below */	
 Factor				: '(' Expression ')' 
 					{
-						$$ = $2;
+						$$ = $2; //Set the node to point to Expression
 					}
 					| T_NUM 
 					{
-						$$ = ASTCreateNode(A_NUM);
-						$$->value = $1;
-						$$->datatype = A_INTTYPE;
+						$$ = ASTCreateNode(A_NUM); //Set the node to be an A_NUM
+						$$->value = $1; //Set the value of the node to be the value of T_NUM
+						$$->datatype = A_INTTYPE; //Set the datatype to be A_INTTYPE
 					}
 					| Var {$$ = $1;}
 					| Call {$$ = $1;}
 					| T_TRUE 
 					{
-						$$ = ASTCreateNode(A_TRUE);
-						$$->datatype = A_BOOLEANTYPE;
+						$$ = ASTCreateNode(A_TRUE); //Set the node to be an A_TRUE node
+						$$->datatype = A_BOOLEANTYPE; //Set the datatype to be boolean type
 					}
 					| T_FALSE 
 					{
-						$$ = ASTCreateNode(A_FALSE); 
-						$$->datatype = A_BOOLEANTYPE;
+						$$ = ASTCreateNode(A_FALSE); //Set the node to be an A_FALSE node
+						$$->datatype = A_BOOLEANTYPE; //Set the datatype to be boolean type
 					}
 					| T_NOT Factor 
 					{
+						//If the datatype of Factor is not boolean type, then exit.
 						if($2->datatype != A_BOOLEANTYPE){
 							yyerror("NOT operator expects boolean");
 							exit(1);
 						}
-						$$ = ASTCreateNode(A_EXPR);
-						$$->operator = A_NOT;
-						$$->s1 = $2;
-						$$->datatype = $2->datatype;
+						$$ = ASTCreateNode(A_EXPR); //Set the node to point to an A_EXPR node
+						$$->operator = A_NOT; //Set the operator to be an A_NOT.
+						$$->s1 = $2; //Set the s1 branch to be the Factor
+						$$->datatype = $2->datatype; //Set the node's datatype with the datatype of Factor
 					}
 					;
 /* 30. A Call can be a T_ID followed by an open paranthesis, Args, and close paranthesis */			
 Call 				: T_ID '(' Args ')' 
 					{
 						//Check if it is in the symtable
-						struct SymbTab *p;
-						p = Search($1, 0, 0);
+						struct SymbTab *p; //Create a SymbTab pointer p
+						p = Search($1, 0, 0); //Set p to be the returned searched symtab
+						//If p is NULL, then exit
 						if(p == NULL){
 							yyerror($1);
 							yyerror("Function is used but not in table");
@@ -626,11 +637,11 @@ Call 				: T_ID '(' Args ')'
 							exit(1);
 						}
 
-						$$ = ASTCreateNode(A_CALL);
-						$$->s1 = $3;
-						$$->name = $1;
-						$$->symbol = p;
-						$$->datatype = p->Declared_Type;
+						$$ = ASTCreateNode(A_CALL); //Set the node to point to an A_CALL
+						$$->s1 = $3; //Set the s1 branch to be Args
+						$$->name = $1; //Set the name to T_ID
+						$$->symbol = p; //Set the node's symbol to reference p.
+						$$->datatype = p->Declared_Type; //Set the node's type to be p's declared type.
 					}
 					;
 /* 31. An Args can be empty or an ArgList */			
@@ -647,15 +658,17 @@ Args				: /* empty */
 /* 32. An ArgList can be an Expression or an Expression followed by a comma and ArgList */		
 ArgList 			: Expression 
 					{
-						$$ = ASTCreateNode(A_ARGLIST);
-						$$->s1 = $1;
+						$$ = ASTCreateNode(A_ARGLIST); //Set the node to be an A_ARGLIST
+						$$->s1 = $1; //Set the s1 branch to be Expression
+						//Set the node's symbol to be the returned symtab with the name from CreateTemp
 						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					| Expression ',' ArgList
 					{
-						$$ = ASTCreateNode(A_ARGLIST);
-						$$->s1 = $1;
-						$$->s2 = $3;
+						$$ = ASTCreateNode(A_ARGLIST); //Set the node to be an A_ARGLIST
+						$$->s1 = $1; //Set the s1 branch to be Expression
+						$$->s2 = $3; //Set the s2 branch to be ArgList
+						//Set the node's symbol to be the returned symtab with the name from CreateTemp
 						$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					;

@@ -38,6 +38,10 @@
 	In summary, this lab's primary objective is to equip the compiler with the capability to manage
 	symbol tables effectively, perform rudimentary type checking, and handle scope management. These enhancements aim to 
 	improve the compiler's code generation process, making it more robust and reliable.
+
+    Changes Made: 
+        -In A_VARDEC, A_FUNDEC, A_PARAM, A_VAR added actions to print out the offset and level.
+        -For A_FUNDEC, just print out the size.
 */
 
 #include<stdio.h>

@@ -42,6 +42,9 @@
     In summary, this lab's primary objective is to equip the compiler with the capability to manage
     symbol tables effectively, perform rudimentary type checking, and handle scope management. These enhancements aim to 
     improve the compiler's code generation process, making it more robust and reliable.
+
+    Changes made:
+      -Added functionality to check_params function.
 */
 
     
@@ -234,19 +237,21 @@ int Delete(int level)
 
   /*
   PRE: Two lists that represent formals and actuals
-  POST: if they are the same length, each elemnt is type consistent and 0 otherwise.
+  POST: if they are the same length, each element is type consistent and 0 otherwise.
   */
 int check_params(ASTnode *formal, ASTnode *actual) {
 
-      //If both nodes have reached the end of their list at the same time.
+    //If both nodes have reached the end of their list at the same time, then return 1.
     if(formal == NULL && actual == NULL){
       return 1;
     }
 
+    //If one or the other node is NULL while one is not NULL, then return 0 since not the same size.
     if(formal == NULL || actual == NULL){
       return 0;
     }
 
+    //If the datatypes don't match, then return 0.
     if((formal->symbol->Declared_Type != actual->s1->datatype)){
       return 0;
     }

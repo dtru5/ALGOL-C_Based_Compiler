@@ -1,7 +1,7 @@
 #Dominik Trujillo
 #10/20/2023
 #Lab7 Makefile
-#LAB 7 ALGOL Abstract Syntax Tree
+#LAB 7 ALGOL -- add symbol table and type checking
 
 all: lab7
 
