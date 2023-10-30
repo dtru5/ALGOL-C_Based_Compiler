@@ -123,6 +123,7 @@
 
 	/* begin specs */
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include "ast.h"
 #include "symtable.h"
@@ -132,6 +133,8 @@ int yylex();
 int LEVEL = 0; //How many compound statements deep we're in.
 int OFFSET = 0; //How many words have we seen at GLOBAL or inside a function.
 int GOFFSET; //Holder for global offset when we enter and exit a fucntion definition.
+int maxoffset; //Total number of words a function needs
+
 extern int lineno; //Global variable for line number counter.
 extern ASTnode * program; //Brought over program from ast.c
 
@@ -147,7 +150,7 @@ void yyerror (s)  /* Called by yyparse on error */
   printf ("%s on line %d\n", s, lineno);
 }
 
-#line 151 "y.tab.c"
+#line 154 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -258,7 +261,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 86 "lab7.y"
+#line 89 "lab7.y"
  int num;
 	 char * string; 
 	 ASTnode * node; //Added ASTNode pointer called node into the union.
@@ -266,7 +269,7 @@ union YYSTYPE
 	 enum OPERATORS operator; //added operators to the union
 	 
 
-#line 270 "y.tab.c"
+#line 273 "y.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -340,32 +343,35 @@ enum yysymbol_kind_t
   YYSYMBOL_VarList = 51,                   /* VarList  */
   YYSYMBOL_TypeSpecifier = 52,             /* TypeSpecifier  */
   YYSYMBOL_FunDeclaration = 53,            /* FunDeclaration  */
-  YYSYMBOL_Params = 54,                    /* Params  */
-  YYSYMBOL_ParamList = 55,                 /* ParamList  */
-  YYSYMBOL_Param = 56,                     /* Param  */
-  YYSYMBOL_CompoundStmt = 57,              /* CompoundStmt  */
-  YYSYMBOL_LocalDeclarations = 58,         /* LocalDeclarations  */
-  YYSYMBOL_StatementList = 59,             /* StatementList  */
-  YYSYMBOL_Statement = 60,                 /* Statement  */
-  YYSYMBOL_ExpressionStmt = 61,            /* ExpressionStmt  */
-  YYSYMBOL_SelectionStmt = 62,             /* SelectionStmt  */
-  YYSYMBOL_IterationStmt = 63,             /* IterationStmt  */
-  YYSYMBOL_ReturnStmt = 64,                /* ReturnStmt  */
-  YYSYMBOL_ReadStmt = 65,                  /* ReadStmt  */
-  YYSYMBOL_WriteStmt = 66,                 /* WriteStmt  */
-  YYSYMBOL_AssignmentStmt = 67,            /* AssignmentStmt  */
-  YYSYMBOL_Expression = 68,                /* Expression  */
-  YYSYMBOL_Var = 69,                       /* Var  */
-  YYSYMBOL_SimpleExpression = 70,          /* SimpleExpression  */
-  YYSYMBOL_Relop = 71,                     /* Relop  */
-  YYSYMBOL_AdditiveExpression = 72,        /* AdditiveExpression  */
-  YYSYMBOL_Addop = 73,                     /* Addop  */
-  YYSYMBOL_Term = 74,                      /* Term  */
-  YYSYMBOL_Multop = 75,                    /* Multop  */
-  YYSYMBOL_Factor = 76,                    /* Factor  */
-  YYSYMBOL_Call = 77,                      /* Call  */
-  YYSYMBOL_Args = 78,                      /* Args  */
-  YYSYMBOL_ArgList = 79                    /* ArgList  */
+  YYSYMBOL_54_1 = 54,                      /* $@1  */
+  YYSYMBOL_55_2 = 55,                      /* $@2  */
+  YYSYMBOL_Params = 56,                    /* Params  */
+  YYSYMBOL_ParamList = 57,                 /* ParamList  */
+  YYSYMBOL_Param = 58,                     /* Param  */
+  YYSYMBOL_CompoundStmt = 59,              /* CompoundStmt  */
+  YYSYMBOL_60_3 = 60,                      /* $@3  */
+  YYSYMBOL_LocalDeclarations = 61,         /* LocalDeclarations  */
+  YYSYMBOL_StatementList = 62,             /* StatementList  */
+  YYSYMBOL_Statement = 63,                 /* Statement  */
+  YYSYMBOL_ExpressionStmt = 64,            /* ExpressionStmt  */
+  YYSYMBOL_SelectionStmt = 65,             /* SelectionStmt  */
+  YYSYMBOL_IterationStmt = 66,             /* IterationStmt  */
+  YYSYMBOL_ReturnStmt = 67,                /* ReturnStmt  */
+  YYSYMBOL_ReadStmt = 68,                  /* ReadStmt  */
+  YYSYMBOL_WriteStmt = 69,                 /* WriteStmt  */
+  YYSYMBOL_AssignmentStmt = 70,            /* AssignmentStmt  */
+  YYSYMBOL_Expression = 71,                /* Expression  */
+  YYSYMBOL_Var = 72,                       /* Var  */
+  YYSYMBOL_SimpleExpression = 73,          /* SimpleExpression  */
+  YYSYMBOL_Relop = 74,                     /* Relop  */
+  YYSYMBOL_AdditiveExpression = 75,        /* AdditiveExpression  */
+  YYSYMBOL_Addop = 76,                     /* Addop  */
+  YYSYMBOL_Term = 77,                      /* Term  */
+  YYSYMBOL_Multop = 78,                    /* Multop  */
+  YYSYMBOL_Factor = 79,                    /* Factor  */
+  YYSYMBOL_Call = 80,                      /* Call  */
+  YYSYMBOL_Args = 81,                      /* Args  */
+  YYSYMBOL_ArgList = 82                    /* ArgList  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -482,7 +488,7 @@ typedef int yytype_uint16;
 
 
 /* Stored state numbers (used for stacks). */
-typedef yytype_int8 yy_state_t;
+typedef yytype_uint8 yy_state_t;
 
 /* State numbers in computations.  */
 typedef int yy_state_fast_t;
@@ -693,16 +699,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  10
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   132
+#define YYLAST   133
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  46
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  34
+#define YYNNTS  37
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  78
+#define YYNRULES  81
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  128
+#define YYNSTATES  131
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   284
@@ -754,14 +760,15 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   116,   116,   122,   127,   135,   136,   139,   153,   172,
-     189,   208,   231,   232,   233,   236,   246,   251,   258,   262,
-     269,   275,   284,   293,   296,   304,   307,   315,   316,   317,
-     318,   319,   320,   321,   322,   325,   330,   337,   345,   357,
-     365,   369,   376,   383,   388,   395,   403,   406,   411,   419,
-     420,   429,   430,   431,   432,   433,   434,   437,   441,   450,
-     451,   454,   455,   464,   465,   466,   467,   470,   474,   479,
-     480,   481,   485,   489,   496,   505,   508,   515,   520
+       0,   119,   119,   125,   130,   138,   139,   142,   156,   175,
+     191,   211,   234,   235,   236,   240,   259,   239,   277,   281,
+     288,   292,   299,   314,   332,   332,   347,   350,   358,   361,
+     369,   370,   371,   372,   373,   374,   375,   376,   379,   384,
+     391,   399,   411,   419,   423,   430,   437,   442,   449,   462,
+     465,   487,   520,   521,   536,   537,   538,   539,   540,   541,
+     544,   549,   564,   565,   568,   569,   584,   585,   586,   587,
+     590,   594,   600,   601,   602,   607,   612,   625,   659,   662,
+     669,   675
 };
 #endif
 
@@ -784,12 +791,13 @@ static const char *const yytname[] =
   "T_DO", "T_TRUE", "T_FALSE", "'|'", "'&'", "'+'", "'-'", "'*'", "'/'",
   "'%'", "UMINUS", "';'", "'['", "']'", "','", "'('", "')'", "'='", "'<'",
   "'>'", "$accept", "Program", "Declarationlist", "Declaration",
-  "VarDeclaration", "VarList", "TypeSpecifier", "FunDeclaration", "Params",
-  "ParamList", "Param", "CompoundStmt", "LocalDeclarations",
-  "StatementList", "Statement", "ExpressionStmt", "SelectionStmt",
-  "IterationStmt", "ReturnStmt", "ReadStmt", "WriteStmt", "AssignmentStmt",
-  "Expression", "Var", "SimpleExpression", "Relop", "AdditiveExpression",
-  "Addop", "Term", "Multop", "Factor", "Call", "Args", "ArgList", YY_NULLPTR
+  "VarDeclaration", "VarList", "TypeSpecifier", "FunDeclaration", "$@1",
+  "$@2", "Params", "ParamList", "Param", "CompoundStmt", "$@3",
+  "LocalDeclarations", "StatementList", "Statement", "ExpressionStmt",
+  "SelectionStmt", "IterationStmt", "ReturnStmt", "ReadStmt", "WriteStmt",
+  "AssignmentStmt", "Expression", "Var", "SimpleExpression", "Relop",
+  "AdditiveExpression", "Addop", "Term", "Multop", "Factor", "Call",
+  "Args", "ArgList", YY_NULLPTR
 };
 
 static const char *
@@ -799,12 +807,12 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-46)
+#define YYPACT_NINF (-49)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
 
-#define YYTABLE_NINF (-17)
+#define YYTABLE_NINF (-19)
 
 #define yytable_value_is_error(Yyn) \
   0
@@ -813,19 +821,20 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      84,   -46,   -46,   -46,     3,   -46,    84,   -46,    24,   -46,
-     -46,   -46,   -16,   -24,    29,    49,    93,   -46,    18,   -26,
-     -46,     0,    57,    44,   -46,    40,    65,    66,    97,    84,
-      49,    68,    84,   -46,   -46,   -46,   -46,    84,    49,     6,
-     -46,   -46,    55,    17,   104,    35,    32,    32,    32,   -46,
-     -46,   -46,    32,   -46,    99,     6,   -46,   -46,   -46,   -46,
-     -46,   -46,   -46,    73,    69,    34,    38,    64,   -46,   -46,
-      32,    32,   -46,    74,   -46,    75,    77,    78,    80,   -46,
-      94,    92,    81,   -46,   -46,   -46,    32,   -46,   -46,   -46,
-     -46,   -46,   -46,    32,   -46,   -46,    32,   -46,   -46,   -46,
-     -46,    32,    82,    85,    86,   -46,   -46,   -46,   -46,   -46,
-       6,     6,   -46,    50,    38,    64,   -46,   -46,    32,   -46,
-      79,   -46,   -46,   -46,     6,   -46,    95,   -46
+      16,   -49,   -49,   -49,     3,   -49,    16,   -49,     4,   -49,
+     -49,   -49,    60,    -9,    43,    28,   -49,   -49,    14,    70,
+     -49,    99,    21,    15,    71,    42,   -49,    52,    28,    36,
+     -49,    16,   -49,    54,    90,   -49,   -49,   -49,   -49,    16,
+      16,    28,     6,   -49,   -49,    45,    17,    98,    35,    32,
+      32,    32,   -49,   -49,   -49,    32,   -49,    93,     6,   -49,
+     -49,   -49,   -49,   -49,   -49,   -49,    72,    68,    34,   -18,
+      63,   -49,   -49,    32,    32,   -49,    75,   -49,    76,    78,
+      79,    80,   -49,    91,    92,    77,   -49,   -49,   -49,    32,
+     -49,   -49,   -49,   -49,   -49,   -49,    32,   -49,   -49,    32,
+     -49,   -49,   -49,   -49,    32,    81,    82,    83,   -49,   -49,
+     -49,   -49,   -49,     6,     6,   -49,    50,   -18,    63,   -49,
+     -49,    32,   -49,    18,   -49,   -49,   -49,     6,   -49,    97,
+     -49
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -834,75 +843,76 @@ static const yytype_int8 yypact[] =
 static const yytype_int8 yydefact[] =
 {
        0,    12,    13,    14,     0,     2,     3,     5,     0,     6,
-       1,     4,     8,     0,     0,     0,     0,     7,     0,     8,
-      10,    13,     0,     0,    17,    18,     9,    20,     0,     0,
-       0,     0,    23,    15,    19,    11,    21,    23,     0,    25,
-      24,    68,    47,     0,     0,     0,     0,     0,     0,    71,
-      72,    36,     0,    28,     0,    25,    27,    29,    30,    32,
-      33,    34,    31,     0,    69,    46,    49,    57,    61,    70,
-       0,    75,    40,     0,    69,    47,     0,     0,     0,    73,
-       0,     0,     0,    22,    26,    35,     0,    51,    54,    55,
-      56,    52,    53,     0,    59,    60,     0,    65,    66,    63,
-      64,     0,     0,    77,     0,    76,    41,    42,    44,    43,
-       0,     0,    67,     0,    50,    58,    62,    48,     0,    74,
-       0,    39,    45,    78,     0,    37,     0,    38
+       1,     4,     8,     0,     0,     0,    15,     7,     0,     8,
+      10,     0,     9,    13,     0,     0,    19,    20,     0,    22,
+      16,     0,    11,     0,     0,    21,    23,    24,    17,    26,
+      26,     0,    28,    27,    71,    50,     0,     0,     0,     0,
+       0,     0,    74,    75,    39,     0,    31,     0,    28,    30,
+      32,    33,    35,    36,    37,    34,     0,    72,    49,    52,
+      60,    64,    73,     0,    78,    43,     0,    72,    50,     0,
+       0,     0,    76,     0,     0,     0,    25,    29,    38,     0,
+      54,    57,    58,    59,    55,    56,     0,    62,    63,     0,
+      68,    69,    66,    67,     0,     0,    80,     0,    79,    44,
+      45,    47,    46,     0,     0,    70,     0,    53,    61,    65,
+      51,     0,    77,     0,    42,    48,    81,     0,    40,     0,
+      41
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -46,   -46,   114,   -46,     9,    -7,    52,   -46,   -46,    98,
-     -46,    96,    89,    67,   -36,   -46,   -46,   -46,   -46,   -46,
-     -46,   -46,   -41,   -39,    43,   -46,    37,   -46,    36,   -46,
-     -45,   -46,   -46,    13
+     -49,   -49,   117,   -49,    29,    -3,    49,   -49,   -49,   -49,
+     -49,    95,   -49,    94,   -49,    84,    69,   -23,   -49,   -49,
+     -49,   -49,   -49,   -49,   -49,   -44,   -42,    40,   -49,    37,
+     -49,    31,   -49,   -48,   -49,   -49,    10
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     4,     5,     6,     7,    13,     8,     9,    23,    24,
-      25,    53,    39,    54,    55,    56,    57,    58,    59,    60,
-      61,    62,    63,    74,    65,    93,    66,    96,    67,   101,
-      68,    69,   104,   105
+       0,     4,     5,     6,     7,    13,     8,     9,    21,    34,
+      25,    26,    27,    56,    39,    42,    57,    58,    59,    60,
+      61,    62,    63,    64,    65,    66,    77,    68,    96,    69,
+      99,    70,   104,    71,    72,   107,   108
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
    positive, shift that token.  If negative, reduce the rule whose
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
-static const yytype_int8 yytable[] =
+static const yytype_int16 yytable[] =
 {
-      64,    79,    73,    10,    78,    76,    80,    81,    20,    41,
-      42,    82,    14,    17,    15,    32,    64,    43,    44,    45,
-      41,    42,    14,    35,    15,    16,    46,    47,    12,   102,
-     103,    48,    18,    49,    50,    41,    42,    46,    41,    42,
-      77,    37,   -16,    51,    49,    50,    37,    52,    87,    88,
-      89,    90,    46,    19,    72,    46,   116,    26,    52,    49,
-      50,    27,    49,    50,    87,    88,    89,    90,    22,    94,
-      95,    64,    64,    52,   120,   121,    52,   103,    91,    92,
-      29,    22,    97,    98,    38,    64,    28,   122,   126,    38,
-       1,     2,     3,    70,    91,    92,    71,    99,   100,     1,
-      21,     3,   124,   125,    31,    30,    32,    36,    75,    83,
-      85,   106,    86,    70,   107,   108,   110,   109,   111,   127,
-      11,   117,    84,   112,    33,   118,    40,    34,   119,   113,
-     114,   123,   115
+      67,    82,    76,    10,    81,    79,    83,    84,    12,    44,
+      45,    85,    20,    97,    98,    37,    67,    46,    47,    48,
+      44,    45,     1,     2,     3,    32,    49,    50,    17,   105,
+     106,    51,    19,    52,    53,    44,    45,    49,    44,    45,
+      80,   127,   128,    54,    52,    53,    18,    55,    90,    91,
+      92,    93,    49,    22,    75,    49,   119,   -18,    55,    52,
+      53,    28,    52,    53,    90,    91,    92,    93,    40,    40,
+      24,    67,    67,    55,    33,    29,    55,   106,    94,    95,
+      24,   100,   101,    73,    30,    67,    74,   125,    41,    41,
+     123,   124,    31,    36,    94,    95,   102,   103,    14,    37,
+      15,    16,    78,    86,   129,     1,    23,     3,    14,    88,
+      15,    89,   109,   113,    73,   110,   111,   112,   114,   115,
+     120,   130,   121,    11,    43,   122,    35,    87,    38,   116,
+     118,   126,     0,   117
 };
 
 static const yytype_int8 yycheck[] =
 {
-      39,    46,    43,     0,    45,    44,    47,    48,    15,     3,
-       4,    52,    38,    37,    40,     9,    55,    11,    12,    13,
-       3,     4,    38,    30,    40,    41,    20,    21,     4,    70,
-      71,    25,     3,    27,    28,     3,     4,    20,     3,     4,
-       5,    32,    42,    37,    27,    28,    37,    41,    14,    15,
-      16,    17,    20,     4,    37,    20,   101,    39,    41,    27,
-      28,     4,    27,    28,    14,    15,    16,    17,    16,    31,
-      32,   110,   111,    41,   110,   111,    41,   118,    44,    45,
-      40,    29,    18,    19,    32,   124,    42,    37,   124,    37,
-       6,     7,     8,    38,    44,    45,    41,    33,    34,     6,
-       7,     8,    23,    24,    38,    40,     9,    39,     4,    10,
-      37,    37,    43,    38,    37,    37,    22,    37,    26,    24,
-       6,    39,    55,    42,    28,    40,    37,    29,    42,    86,
-      93,   118,    96
+      42,    49,    46,     0,    48,    47,    50,    51,     4,     3,
+       4,    55,    15,    31,    32,     9,    58,    11,    12,    13,
+       3,     4,     6,     7,     8,    28,    20,    21,    37,    73,
+      74,    25,     4,    27,    28,     3,     4,    20,     3,     4,
+       5,    23,    24,    37,    27,    28,     3,    41,    14,    15,
+      16,    17,    20,    39,    37,    20,   104,    42,    41,    27,
+      28,    40,    27,    28,    14,    15,    16,    17,    39,    40,
+      21,   113,   114,    41,    38,     4,    41,   121,    44,    45,
+      31,    18,    19,    38,    42,   127,    41,    37,    39,    40,
+     113,   114,    40,    39,    44,    45,    33,    34,    38,     9,
+      40,    41,     4,    10,   127,     6,     7,     8,    38,    37,
+      40,    43,    37,    22,    38,    37,    37,    37,    26,    42,
+      39,    24,    40,     6,    40,    42,    31,    58,    34,    89,
+      99,   121,    -1,    96
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -911,43 +921,46 @@ static const yytype_int8 yystos[] =
 {
        0,     6,     7,     8,    47,    48,    49,    50,    52,    53,
        0,    48,     4,    51,    38,    40,    41,    37,     3,     4,
-      51,     7,    52,    54,    55,    56,    39,     4,    42,    40,
-      40,    38,     9,    57,    55,    51,    39,    50,    52,    58,
-      58,     3,     4,    11,    12,    13,    20,    21,    25,    27,
-      28,    37,    41,    57,    59,    60,    61,    62,    63,    64,
-      65,    66,    67,    68,    69,    70,    72,    74,    76,    77,
-      38,    41,    37,    68,    69,     4,    69,     5,    68,    76,
-      68,    68,    68,    10,    59,    37,    43,    14,    15,    16,
-      17,    44,    45,    71,    31,    32,    73,    18,    19,    33,
-      34,    75,    68,    68,    78,    79,    37,    37,    37,    37,
-      22,    26,    42,    70,    72,    74,    76,    39,    40,    42,
-      60,    60,    37,    79,    23,    24,    60,    24
+      51,    54,    39,     7,    52,    56,    57,    58,    40,     4,
+      42,    40,    51,    38,    55,    57,    39,     9,    59,    60,
+      50,    52,    61,    61,     3,     4,    11,    12,    13,    20,
+      21,    25,    27,    28,    37,    41,    59,    62,    63,    64,
+      65,    66,    67,    68,    69,    70,    71,    72,    73,    75,
+      77,    79,    80,    38,    41,    37,    71,    72,     4,    72,
+       5,    71,    79,    71,    71,    71,    10,    62,    37,    43,
+      14,    15,    16,    17,    44,    45,    74,    31,    32,    76,
+      18,    19,    33,    34,    78,    71,    71,    81,    82,    37,
+      37,    37,    37,    22,    26,    42,    73,    75,    77,    79,
+      39,    40,    42,    63,    63,    37,    82,    23,    24,    63,
+      24
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
        0,    46,    47,    48,    48,    49,    49,    50,    51,    51,
-      51,    51,    52,    52,    52,    53,    54,    54,    55,    55,
-      56,    56,    57,    58,    58,    59,    59,    60,    60,    60,
-      60,    60,    60,    60,    60,    61,    61,    62,    62,    63,
-      64,    64,    65,    66,    66,    67,    68,    69,    69,    70,
-      70,    71,    71,    71,    71,    71,    71,    72,    72,    73,
-      73,    74,    74,    75,    75,    75,    75,    76,    76,    76,
-      76,    76,    76,    76,    77,    78,    78,    79,    79
+      51,    51,    52,    52,    52,    54,    55,    53,    56,    56,
+      57,    57,    58,    58,    60,    59,    61,    61,    62,    62,
+      63,    63,    63,    63,    63,    63,    63,    63,    64,    64,
+      65,    65,    66,    67,    67,    68,    69,    69,    70,    71,
+      72,    72,    73,    73,    74,    74,    74,    74,    74,    74,
+      75,    75,    76,    76,    77,    77,    78,    78,    78,    78,
+      79,    79,    79,    79,    79,    79,    79,    80,    81,    81,
+      82,    82
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
        0,     2,     1,     1,     2,     1,     1,     3,     1,     4,
-       3,     6,     1,     1,     1,     6,     1,     1,     1,     3,
-       2,     4,     4,     0,     2,     0,     2,     1,     1,     1,
-       1,     1,     1,     1,     1,     2,     1,     5,     7,     4,
-       2,     3,     3,     3,     3,     4,     1,     1,     4,     1,
-       3,     1,     1,     1,     1,     1,     1,     1,     3,     1,
-       1,     1,     3,     1,     1,     1,     1,     3,     1,     1,
-       1,     1,     1,     2,     4,     0,     1,     1,     3
+       3,     6,     1,     1,     1,     0,     0,     8,     1,     1,
+       1,     3,     2,     4,     0,     5,     0,     2,     0,     2,
+       1,     1,     1,     1,     1,     1,     1,     1,     2,     1,
+       5,     7,     4,     2,     3,     3,     3,     3,     4,     1,
+       1,     4,     1,     3,     1,     1,     1,     1,     1,     1,
+       1,     3,     1,     1,     1,     3,     1,     1,     1,     1,
+       3,     1,     1,     1,     1,     1,     2,     4,     0,     1,
+       1,     3
 };
 
 
@@ -1411,46 +1424,46 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* Program: Declarationlist  */
-#line 117 "lab7.y"
+#line 120 "lab7.y"
                     {
 						program = (yyvsp[0].node);
 					}
-#line 1419 "y.tab.c"
+#line 1432 "y.tab.c"
     break;
 
   case 3: /* Declarationlist: Declaration  */
-#line 123 "lab7.y"
+#line 126 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_DEC_LIST); //Set the companion value to be a node with type A_DEC_LIST
 						(yyval.node)->s1 = (yyvsp[0].node); //Set s1 of the node to be the Declaration value
 					}
-#line 1428 "y.tab.c"
+#line 1441 "y.tab.c"
     break;
 
   case 4: /* Declarationlist: Declaration Declarationlist  */
-#line 128 "lab7.y"
+#line 131 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_DEC_LIST); //Set the companion value to be a node with type A_DEC_LIST;
 						(yyval.node)->s1 = (yyvsp[-1].node); //Set the s1 branch to be a Declaration
 						(yyval.node)->s2 = (yyvsp[0].node); //Set the s2 branch to be a Declarationlist
 					}
-#line 1438 "y.tab.c"
+#line 1451 "y.tab.c"
     break;
 
   case 5: /* Declaration: VarDeclaration  */
-#line 135 "lab7.y"
+#line 138 "lab7.y"
                                          {(yyval.node) = (yyvsp[0].node);}
-#line 1444 "y.tab.c"
+#line 1457 "y.tab.c"
     break;
 
   case 6: /* Declaration: FunDeclaration  */
-#line 136 "lab7.y"
+#line 139 "lab7.y"
                                                  {(yyval.node) = (yyvsp[0].node);}
-#line 1450 "y.tab.c"
+#line 1463 "y.tab.c"
     break;
 
   case 7: /* VarDeclaration: TypeSpecifier VarList ';'  */
-#line 140 "lab7.y"
+#line 143 "lab7.y"
                                         {
 						(yyval.node) = (yyvsp[-1].node);
 						ASTnode *p;
@@ -1461,11 +1474,11 @@ yyreduce:
 							p = p->s1;
 							}
 					}
-#line 1465 "y.tab.c"
+#line 1478 "y.tab.c"
     break;
 
   case 8: /* VarList: T_ID  */
-#line 154 "lab7.y"
+#line 157 "lab7.y"
                                                 {
 							if (Search((yyvsp[0].string), LEVEL, 0) == NULL){
 								//Symbol not there, stick it in
@@ -1484,11 +1497,11 @@ yyreduce:
 							}
 
 						}
-#line 1488 "y.tab.c"
+#line 1501 "y.tab.c"
     break;
 
   case 9: /* VarList: T_ID '[' T_NUM ']'  */
-#line 173 "lab7.y"
+#line 176 "lab7.y"
                                                 {												
 							if (Search((yyvsp[-3].string), LEVEL, 0) == NULL){
 								(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
@@ -1497,7 +1510,6 @@ yyreduce:
 								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
 								(yyval.node)->symbol = Insert((yyvsp[-3].string), A_UNKNOWN, SYM_ARRAY, LEVEL, (yyvsp[-1].num), OFFSET);
 								OFFSET += (yyvsp[-1].num);
-								//FIX ME -- MISSING
 							}
 							else{
 								yyerror((yyvsp[-3].string));
@@ -1505,11 +1517,11 @@ yyreduce:
 								exit(1);
 							}
 						}
-#line 1509 "y.tab.c"
+#line 1521 "y.tab.c"
     break;
 
   case 10: /* VarList: T_ID ',' VarList  */
-#line 190 "lab7.y"
+#line 192 "lab7.y"
                                                 {
 							if (Search((yyvsp[-2].string), LEVEL, 0) == NULL){
 								(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
@@ -1520,7 +1532,8 @@ yyreduce:
 								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
 								
 								//Set p's symbol to be the node that is returned after inserting it into the symtable
-								(yyval.node)->symbol = Insert((yyvsp[-2].string), A_UNKNOWN, SYM_SCALAR, LEVEL, 1,(yyvsp[0].node)->symbol->offset);
+								(yyval.node)->symbol = Insert((yyvsp[-2].string), A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
+								OFFSET++; 
 							}
 							else{
 								yyerror((yyvsp[-2].string));
@@ -1528,11 +1541,11 @@ yyreduce:
 								exit(1);
 							}
 						}
-#line 1532 "y.tab.c"
+#line 1545 "y.tab.c"
     break;
 
   case 11: /* VarList: T_ID '[' T_NUM ']' ',' VarList  */
-#line 209 "lab7.y"
+#line 212 "lab7.y"
                                                 {
 							if (Search((yyvsp[-5].string), LEVEL, 0) == NULL){
 								(yyval.node) = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
@@ -1544,7 +1557,7 @@ yyreduce:
 								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
 								
 								//Set p's symbol to be the node that is returned after inserting it into the symtable
-								(yyval.node)->symbol = Insert((yyvsp[-5].string), A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
+								(yyval.node)->symbol = Insert((yyvsp[-5].string), A_UNKNOWN, SYM_ARRAY, LEVEL, (yyvsp[-3].num), OFFSET);
 								OFFSET += (yyvsp[-3].num);
 							}
 							else{
@@ -1553,206 +1566,271 @@ yyreduce:
 								exit(1);
 							}
 						}
-#line 1557 "y.tab.c"
+#line 1570 "y.tab.c"
     break;
 
   case 12: /* TypeSpecifier: T_INT  */
-#line 231 "lab7.y"
+#line 234 "lab7.y"
                                 {(yyval.datatype) = A_INTTYPE;}
-#line 1563 "y.tab.c"
+#line 1576 "y.tab.c"
     break;
 
   case 13: /* TypeSpecifier: T_VOID  */
-#line 232 "lab7.y"
+#line 235 "lab7.y"
                                                  {(yyval.datatype) = A_VOIDTYPE;}
-#line 1569 "y.tab.c"
+#line 1582 "y.tab.c"
     break;
 
   case 14: /* TypeSpecifier: T_BOOLEAN  */
-#line 233 "lab7.y"
+#line 236 "lab7.y"
                                                     {(yyval.datatype) = A_BOOLEANTYPE;}
-#line 1575 "y.tab.c"
+#line 1588 "y.tab.c"
     break;
 
-  case 15: /* FunDeclaration: TypeSpecifier T_ID '(' Params ')' CompoundStmt  */
-#line 237 "lab7.y"
+  case 15: /* $@1: %empty  */
+#line 240 "lab7.y"
                                                 {
-							(yyval.node) = ASTCreateNode(A_FUNDEC);
-							(yyval.node)->name = (yyvsp[-4].string); //Setting the name with the ID
-							(yyval.node)->datatype = (yyvsp[-5].datatype); //Setting the datatype with the given TypeSpecifier
-							(yyval.node)->s1 = (yyvsp[-2].node); //Setting the s1 branch to be the Params
-							(yyval.node)->s2 = (yyvsp[0].node); //Setting s2 branch to be the Compound statement
+							//Check to see if function name is known, if it is barf.
+							//else install it in the symbol table.
+							//manage offset value.
+							if(Search((yyvsp[-1].string),LEVEL, 0) == NULL){
+								//insert
+								Insert((yyvsp[-1].string), (yyvsp[-2].datatype), SYM_FUNCTION, LEVEL, 0, 0);
+								GOFFSET = OFFSET;
+								OFFSET = 2;
+								maxoffset = OFFSET;
+							}
+							else{
+								//BARF
+								yyerror((yyvsp[-1].string));
+								yyerror("Cannot create function, name is use");
+								exit(1);
+							}
 						}
-#line 1587 "y.tab.c"
+#line 1611 "y.tab.c"
     break;
 
-  case 16: /* Params: T_VOID  */
-#line 247 "lab7.y"
-                                        {
-						(yyval.node) = ASTCreateNode(A_PARAMS);
-						
-					}
-#line 1596 "y.tab.c"
-    break;
-
-  case 17: /* Params: ParamList  */
-#line 252 "lab7.y"
-                                        {
-						(yyval.node) = (yyvsp[0].node);
-					}
-#line 1604 "y.tab.c"
-    break;
-
-  case 18: /* ParamList: Param  */
+  case 16: /* $@2: %empty  */
 #line 259 "lab7.y"
-                                        {
-						(yyval.node) = (yyvsp[0].node);
-					}
-#line 1612 "y.tab.c"
-    break;
-
-  case 19: /* ParamList: Param ',' ParamList  */
-#line 263 "lab7.y"
-                                        {
-						(yyval.node) = (yyvsp[-2].node);
-						(yyval.node)->s1 = (yyvsp[0].node);
-					}
+                                                {
+							//Update symtable with parameter
+							//Allow us to have recursive functions.
+							Search((yyvsp[-4].string), LEVEL, 0)->fparms = (yyvsp[-1].node);
+						}
 #line 1621 "y.tab.c"
     break;
 
-  case 20: /* Param: TypeSpecifier T_ID  */
-#line 270 "lab7.y"
-                                        {
-						(yyval.node) = ASTCreateNode(A_PARAM);
-						(yyval.node)->datatype = (yyvsp[-1].datatype);
-						(yyval.node)->name = (yyvsp[0].string);
-					}
-#line 1631 "y.tab.c"
+  case 17: /* FunDeclaration: TypeSpecifier T_ID '(' $@1 Params ')' $@2 CompoundStmt  */
+#line 265 "lab7.y"
+                                                {
+							(yyval.node) = ASTCreateNode(A_FUNDEC);
+							(yyval.node)->name = (yyvsp[-6].string); //Setting the name with the ID
+							(yyval.node)->datatype = (yyvsp[-7].datatype); //Setting the datatype with the given TypeSpecifier
+							(yyval.node)->s1 = (yyvsp[-3].node); //Setting the s1 branch to be the Params
+							(yyval.node)->s2 = (yyvsp[0].node); //Setting s2 branch to be the Compound statement
+							(yyval.node)->symbol = Search((yyvsp[-6].string), LEVEL, 0);
+							(yyval.node)->symbol->offset = maxoffset;
+							OFFSET = GOFFSET;
+						}
+#line 1636 "y.tab.c"
     break;
 
-  case 21: /* Param: TypeSpecifier T_ID '[' ']'  */
-#line 276 "lab7.y"
+  case 18: /* Params: T_VOID  */
+#line 278 "lab7.y"
                                         {
-						(yyval.node) = ASTCreateNode(A_PARAM);
-						(yyval.node)->datatype = (yyvsp[-3].datatype);
-						(yyval.node)->name = (yyvsp[-2].string);
-						(yyval.node)->value = -1;
+						(yyval.node) = NULL;
 					}
-#line 1642 "y.tab.c"
+#line 1644 "y.tab.c"
     break;
 
-  case 22: /* CompoundStmt: T_BEGIN LocalDeclarations StatementList T_END  */
-#line 285 "lab7.y"
+  case 19: /* Params: ParamList  */
+#line 282 "lab7.y"
                                         {
-						(yyval.node) = ASTCreateNode(A_COMPOUND);
-						(yyval.node)->s1 = (yyvsp[-2].node);
-						(yyval.node)->s2 = (yyvsp[-1].node);
+						(yyval.node) = (yyvsp[0].node);
 					}
 #line 1652 "y.tab.c"
     break;
 
-  case 23: /* LocalDeclarations: %empty  */
-#line 293 "lab7.y"
+  case 20: /* ParamList: Param  */
+#line 289 "lab7.y"
                                         {
-						(yyval.node) = NULL;
+						(yyval.node) = (yyvsp[0].node);
 					}
 #line 1660 "y.tab.c"
     break;
 
-  case 24: /* LocalDeclarations: VarDeclaration LocalDeclarations  */
-#line 297 "lab7.y"
+  case 21: /* ParamList: Param ',' ParamList  */
+#line 293 "lab7.y"
                                         {
-						(yyval.node) = (yyvsp[-1].node);
-						(yyval.node)->s2 = (yyvsp[0].node);
+						(yyval.node) = (yyvsp[-2].node);
+						(yyval.node)->s1 = (yyvsp[0].node);
 					}
 #line 1669 "y.tab.c"
     break;
 
-  case 25: /* StatementList: %empty  */
-#line 304 "lab7.y"
+  case 22: /* Param: TypeSpecifier T_ID  */
+#line 300 "lab7.y"
+                                        {
+						if(Search((yyvsp[0].string), 1, 0) == NULL){
+							(yyval.node) = ASTCreateNode(A_PARAM);
+							(yyval.node)->name = (yyvsp[0].string);
+							(yyval.node)->symbol = Insert((yyvsp[0].string), (yyvsp[-1].datatype), SYM_SCALAR, LEVEL+1, 1, OFFSET);
+							(yyval.node)->datatype = (yyval.node)->symbol->Declared_Type;
+							OFFSET++;
+						}
+						else{
+							yyerror((yyvsp[0].string));
+							yyerror("Parameter name already used");
+							exit(1);
+						}
+					}
+#line 1688 "y.tab.c"
+    break;
+
+  case 23: /* Param: TypeSpecifier T_ID '[' ']'  */
+#line 315 "lab7.y"
+                                        {
+						if(Search((yyvsp[-2].string), 1, 0) == NULL){
+							(yyval.node) = ASTCreateNode(A_PARAM);
+							(yyval.node)->name = (yyvsp[-2].string);
+							(yyval.node)->value = -1;
+							(yyval.node)->symbol = Insert((yyvsp[-2].string), (yyvsp[-3].datatype), SYM_ARRAY, LEVEL+1, 1, OFFSET);
+							(yyval.node)->datatype = (yyval.node)->symbol->Declared_Type;
+							OFFSET++;
+						}
+						else{
+							yyerror((yyvsp[-2].string));
+							yyerror("Parameter name already used");
+							exit(1);
+						}
+					}
+#line 1708 "y.tab.c"
+    break;
+
+  case 24: /* $@3: %empty  */
+#line 332 "lab7.y"
+                                  {LEVEL++;}
+#line 1714 "y.tab.c"
+    break;
+
+  case 25: /* CompoundStmt: T_BEGIN $@3 LocalDeclarations StatementList T_END  */
+#line 333 "lab7.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_COMPOUND);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[-1].node);
+						if(OFFSET > maxoffset){
+							maxoffset = OFFSET;
+						}
+						Display();
+						OFFSET -= Delete(LEVEL);
+						LEVEL--;
+					}
+#line 1730 "y.tab.c"
+    break;
+
+  case 26: /* LocalDeclarations: %empty  */
+#line 347 "lab7.y"
+                                        {
+						(yyval.node) = NULL;
+					}
+#line 1738 "y.tab.c"
+    break;
+
+  case 27: /* LocalDeclarations: VarDeclaration LocalDeclarations  */
+#line 351 "lab7.y"
+                                        {
+						(yyval.node) = (yyvsp[-1].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+					}
+#line 1747 "y.tab.c"
+    break;
+
+  case 28: /* StatementList: %empty  */
+#line 358 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_STATEMENTLIST);
 					}
-#line 1677 "y.tab.c"
+#line 1755 "y.tab.c"
     break;
 
-  case 26: /* StatementList: Statement StatementList  */
-#line 308 "lab7.y"
+  case 29: /* StatementList: Statement StatementList  */
+#line 362 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_STATEMENTLIST);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 						(yyval.node)->s2 = (yyvsp[0].node);
 					}
-#line 1687 "y.tab.c"
+#line 1765 "y.tab.c"
     break;
 
-  case 27: /* Statement: ExpressionStmt  */
-#line 315 "lab7.y"
+  case 30: /* Statement: ExpressionStmt  */
+#line 369 "lab7.y"
                                                 {(yyval.node) = (yyvsp[0].node);}
-#line 1693 "y.tab.c"
+#line 1771 "y.tab.c"
     break;
 
-  case 28: /* Statement: CompoundStmt  */
-#line 316 "lab7.y"
+  case 31: /* Statement: CompoundStmt  */
+#line 370 "lab7.y"
                                                       {(yyval.node) = (yyvsp[0].node);}
-#line 1699 "y.tab.c"
+#line 1777 "y.tab.c"
     break;
 
-  case 29: /* Statement: SelectionStmt  */
-#line 317 "lab7.y"
+  case 32: /* Statement: SelectionStmt  */
+#line 371 "lab7.y"
                                                        {(yyval.node) = (yyvsp[0].node);}
-#line 1705 "y.tab.c"
+#line 1783 "y.tab.c"
     break;
 
-  case 30: /* Statement: IterationStmt  */
-#line 318 "lab7.y"
+  case 33: /* Statement: IterationStmt  */
+#line 372 "lab7.y"
                                                        {(yyval.node) = (yyvsp[0].node);}
-#line 1711 "y.tab.c"
+#line 1789 "y.tab.c"
     break;
 
-  case 31: /* Statement: AssignmentStmt  */
-#line 319 "lab7.y"
+  case 34: /* Statement: AssignmentStmt  */
+#line 373 "lab7.y"
                                                         {(yyval.node) = (yyvsp[0].node);}
-#line 1717 "y.tab.c"
+#line 1795 "y.tab.c"
     break;
 
-  case 32: /* Statement: ReturnStmt  */
-#line 320 "lab7.y"
+  case 35: /* Statement: ReturnStmt  */
+#line 374 "lab7.y"
                                                     {(yyval.node) = (yyvsp[0].node);}
-#line 1723 "y.tab.c"
+#line 1801 "y.tab.c"
     break;
 
-  case 33: /* Statement: ReadStmt  */
-#line 321 "lab7.y"
+  case 36: /* Statement: ReadStmt  */
+#line 375 "lab7.y"
                                                   {(yyval.node) = (yyvsp[0].node);}
-#line 1729 "y.tab.c"
+#line 1807 "y.tab.c"
     break;
 
-  case 34: /* Statement: WriteStmt  */
-#line 322 "lab7.y"
+  case 37: /* Statement: WriteStmt  */
+#line 376 "lab7.y"
                                                    {(yyval.node) = (yyvsp[0].node);}
-#line 1735 "y.tab.c"
+#line 1813 "y.tab.c"
     break;
 
-  case 35: /* ExpressionStmt: Expression ';'  */
-#line 326 "lab7.y"
+  case 38: /* ExpressionStmt: Expression ';'  */
+#line 380 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_EXPRESSIONSTMT);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 					}
-#line 1744 "y.tab.c"
+#line 1822 "y.tab.c"
     break;
 
-  case 36: /* ExpressionStmt: ';'  */
-#line 331 "lab7.y"
+  case 39: /* ExpressionStmt: ';'  */
+#line 385 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_EXPRESSIONSTMT);
 					}
-#line 1752 "y.tab.c"
+#line 1830 "y.tab.c"
     break;
 
-  case 37: /* SelectionStmt: T_IF Expression T_THEN Statement T_ENDIF  */
-#line 338 "lab7.y"
+  case 40: /* SelectionStmt: T_IF Expression T_THEN Statement T_ENDIF  */
+#line 392 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_IF);
 						(yyval.node)->s1 = (yyvsp[-3].node); //Set s1 branch of Selection to be the Expression
@@ -1760,11 +1838,11 @@ yyreduce:
 						p->s1 = (yyvsp[-1].node); //Set the A_IF s1 branch with the statement, other will be NULL since it's not an else
 						(yyval.node)->s2=p; //Set Selection statement's s2 to be the A_IF we created.
 					}
-#line 1764 "y.tab.c"
+#line 1842 "y.tab.c"
     break;
 
-  case 38: /* SelectionStmt: T_IF Expression T_THEN Statement T_ELSE Statement T_ENDIF  */
-#line 346 "lab7.y"
+  case 41: /* SelectionStmt: T_IF Expression T_THEN Statement T_ELSE Statement T_ENDIF  */
+#line 400 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_IF);
 						(yyval.node)->s1 = (yyvsp[-5].node); //Set s1 branch of Selection to be the Expression
@@ -1774,324 +1852,426 @@ yyreduce:
 						(yyval.node)->s2=p; //Set Selection statement's s2 to be the A_IF we created.
 
 					}
-#line 1778 "y.tab.c"
+#line 1856 "y.tab.c"
     break;
 
-  case 39: /* IterationStmt: T_WHILE Expression T_DO Statement  */
-#line 358 "lab7.y"
+  case 42: /* IterationStmt: T_WHILE Expression T_DO Statement  */
+#line 412 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_ITERATIONSTMT);
 						(yyval.node)->s1 = (yyvsp[-2].node);
 						(yyval.node)->s2 = (yyvsp[0].node);
 					}
-#line 1788 "y.tab.c"
+#line 1866 "y.tab.c"
     break;
 
-  case 40: /* ReturnStmt: T_RETURN ';'  */
-#line 366 "lab7.y"
+  case 43: /* ReturnStmt: T_RETURN ';'  */
+#line 420 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_RETURNSTMT);
 					}
-#line 1796 "y.tab.c"
+#line 1874 "y.tab.c"
     break;
 
-  case 41: /* ReturnStmt: T_RETURN Expression ';'  */
-#line 370 "lab7.y"
+  case 44: /* ReturnStmt: T_RETURN Expression ';'  */
+#line 424 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_RETURNSTMT);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 					}
-#line 1805 "y.tab.c"
+#line 1883 "y.tab.c"
     break;
 
-  case 42: /* ReadStmt: T_READ Var ';'  */
-#line 377 "lab7.y"
+  case 45: /* ReadStmt: T_READ Var ';'  */
+#line 431 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_READ);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 					}
-#line 1814 "y.tab.c"
+#line 1892 "y.tab.c"
     break;
 
-  case 43: /* WriteStmt: T_WRITE Expression ';'  */
-#line 384 "lab7.y"
+  case 46: /* WriteStmt: T_WRITE Expression ';'  */
+#line 438 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_WRITE);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 					}
-#line 1823 "y.tab.c"
+#line 1901 "y.tab.c"
     break;
 
-  case 44: /* WriteStmt: T_WRITE T_STRING ';'  */
-#line 389 "lab7.y"
+  case 47: /* WriteStmt: T_WRITE T_STRING ';'  */
+#line 443 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_WRITE);
 						(yyval.node)->name = (yyvsp[-1].string);
 					}
-#line 1832 "y.tab.c"
+#line 1910 "y.tab.c"
     break;
 
-  case 45: /* AssignmentStmt: Var '=' SimpleExpression ';'  */
-#line 396 "lab7.y"
+  case 48: /* AssignmentStmt: Var '=' SimpleExpression ';'  */
+#line 450 "lab7.y"
                                         {
+						if((yyvsp[-3].node)->datatype != (yyvsp[-1].node)->datatype){
+							yyerror("Assignment type mismatch");
+							exit(1);
+						}
 						(yyval.node) = ASTCreateNode(A_ASSIGNMENTSTMT);
 						(yyval.node)->s1 = (yyvsp[-3].node);
 						(yyval.node)->s2 = (yyvsp[-1].node);
+						(yyval.node)->symbol = Insert(CreateTemp(), (yyvsp[-3].node)->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
-#line 1842 "y.tab.c"
+#line 1925 "y.tab.c"
     break;
 
-  case 46: /* Expression: SimpleExpression  */
-#line 403 "lab7.y"
+  case 49: /* Expression: SimpleExpression  */
+#line 462 "lab7.y"
                                                    {(yyval.node) = (yyvsp[0].node);}
-#line 1848 "y.tab.c"
+#line 1931 "y.tab.c"
     break;
 
-  case 47: /* Var: T_ID  */
-#line 407 "lab7.y"
-                                        {
+  case 50: /* Var: T_ID  */
+#line 466 "lab7.y"
+                                        {	//If ID is not there then BARF
+						//If it is the wrong subtype then BARF
+						struct SymbTab *p;
+						p = Search((yyvsp[0].string), LEVEL, 1);
+
+						if(p == NULL){
+							yyerror((yyvsp[0].string));
+							yyerror("Variable used but not defined");
+							exit(1);
+						}
+
+						if(p->SubType != SYM_SCALAR){
+							yyerror((yyvsp[0].string));
+							yyerror("Variable is wrong subtype, should be scalar");
+							exit(1);
+						}
 						(yyval.node) = ASTCreateNode(A_VAR);
 						(yyval.node)->name = (yyvsp[0].string);
+						(yyval.node)->symbol = p;
+						(yyval.node)->datatype = p->Declared_Type;
 					}
-#line 1857 "y.tab.c"
-    break;
-
-  case 48: /* Var: T_ID '[' Expression ']'  */
-#line 412 "lab7.y"
-                                        {
-						(yyval.node) = ASTCreateNode(A_VAR);
-						(yyval.node)->name = (yyvsp[-3].string);
-						(yyval.node)->s1 = (yyvsp[-1].node);
-					}
-#line 1867 "y.tab.c"
-    break;
-
-  case 49: /* SimpleExpression: AdditiveExpression  */
-#line 419 "lab7.y"
-                                             {(yyval.node) = (yyvsp[0].node);}
-#line 1873 "y.tab.c"
-    break;
-
-  case 50: /* SimpleExpression: SimpleExpression Relop AdditiveExpression  */
-#line 421 "lab7.y"
-                                        {
-						(yyval.node) = ASTCreateNode(A_EXPR);
-						(yyval.node)->s1 = (yyvsp[-2].node);
-						(yyval.node)->s2 = (yyvsp[0].node);
-						(yyval.node)->operator = (yyvsp[-1].operator);
-					}
-#line 1884 "y.tab.c"
-    break;
-
-  case 51: /* Relop: T_LE  */
-#line 429 "lab7.y"
-                                       {(yyval.operator) = A_LE;}
-#line 1890 "y.tab.c"
-    break;
-
-  case 52: /* Relop: '<'  */
-#line 430 "lab7.y"
-                                              {(yyval.operator) = A_LESSTHAN;}
-#line 1896 "y.tab.c"
-    break;
-
-  case 53: /* Relop: '>'  */
-#line 431 "lab7.y"
-                                              {(yyval.operator) = A_GREATERTHAN;}
-#line 1902 "y.tab.c"
-    break;
-
-  case 54: /* Relop: T_GE  */
-#line 432 "lab7.y"
-                                               {(yyval.operator) = A_GE;}
-#line 1908 "y.tab.c"
-    break;
-
-  case 55: /* Relop: T_EQ  */
-#line 433 "lab7.y"
-                                               {(yyval.operator) = A_EQ;}
-#line 1914 "y.tab.c"
-    break;
-
-  case 56: /* Relop: T_NE  */
-#line 434 "lab7.y"
-                                               {(yyval.operator) = A_NE;}
-#line 1920 "y.tab.c"
-    break;
-
-  case 57: /* AdditiveExpression: Term  */
-#line 438 "lab7.y"
-                                        {
-						(yyval.node) = (yyvsp[0].node);
-					}
-#line 1928 "y.tab.c"
-    break;
-
-  case 58: /* AdditiveExpression: AdditiveExpression Addop Term  */
-#line 442 "lab7.y"
-                                        {
-						(yyval.node) = ASTCreateNode(A_EXPR);
-						(yyval.node)->s1 = (yyvsp[-2].node);
-						(yyval.node)->s2 = (yyvsp[0].node);
-						(yyval.node)->operator = (yyvsp[-1].operator);
-					}
-#line 1939 "y.tab.c"
-    break;
-
-  case 59: /* Addop: '+'  */
-#line 450 "lab7.y"
-                                      {(yyval.operator) = A_PLUS;}
-#line 1945 "y.tab.c"
-    break;
-
-  case 60: /* Addop: '-'  */
-#line 451 "lab7.y"
-                                              {(yyval.operator) = A_MINUS;}
-#line 1951 "y.tab.c"
-    break;
-
-  case 61: /* Term: Factor  */
-#line 454 "lab7.y"
-                                         {(yyval.node) = (yyvsp[0].node);}
 #line 1957 "y.tab.c"
     break;
 
-  case 62: /* Term: Term Multop Factor  */
-#line 456 "lab7.y"
+  case 51: /* Var: T_ID '[' Expression ']'  */
+#line 488 "lab7.y"
                                         {
+						//If ID is not there then BARF
+						//If it is the wrong subtype then BARF
+						struct SymbTab *p;
+						p = Search((yyvsp[-3].string), LEVEL, 1);
+
+						if(p == NULL){
+							yyerror((yyvsp[-3].string));
+							yyerror("Variable used but not defined");
+							exit(1);
+						}
+
+						if(p->SubType != SYM_ARRAY){
+							yyerror((yyvsp[-3].string));
+							yyerror("Variable is wrong subtype, should be array");
+							exit(1);
+						}
+
+						if((yyvsp[-1].node)->datatype != p->Declared_Type){
+							yyerror((yyvsp[-3].string));
+							yyerror("Index of array should be an integer");
+							exit(1);
+						}
+
+						(yyval.node) = ASTCreateNode(A_VAR);
+						(yyval.node)->name = (yyvsp[-3].string);
+						(yyval.node)->s1 = (yyvsp[-1].node);
+						(yyval.node)->symbol = p;
+						(yyval.node)->datatype = p->Declared_Type;
+					}
+#line 1992 "y.tab.c"
+    break;
+
+  case 52: /* SimpleExpression: AdditiveExpression  */
+#line 520 "lab7.y"
+                                             {(yyval.node) = (yyvsp[0].node);}
+#line 1998 "y.tab.c"
+    break;
+
+  case 53: /* SimpleExpression: SimpleExpression Relop AdditiveExpression  */
+#line 522 "lab7.y"
+                                        {
+						if((yyvsp[-2].node)->datatype != (yyvsp[0].node)->datatype){
+							yyerror("Type mismatch on expression");
+							exit(1);
+						}
 						(yyval.node) = ASTCreateNode(A_EXPR);
 						(yyval.node)->s1 = (yyvsp[-2].node);
 						(yyval.node)->s2 = (yyvsp[0].node);
 						(yyval.node)->operator = (yyvsp[-1].operator);
+						(yyval.node)->datatype = A_BOOLEANTYPE;
+						(yyval.node)->symbol = Insert(CreateTemp(), (yyval.node)->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
-#line 1968 "y.tab.c"
-    break;
-
-  case 63: /* Multop: '*'  */
-#line 464 "lab7.y"
-                                      {(yyval.operator) = A_TIMES;}
-#line 1974 "y.tab.c"
-    break;
-
-  case 64: /* Multop: '/'  */
-#line 465 "lab7.y"
-                                              {(yyval.operator) = A_DIVIDES;}
-#line 1980 "y.tab.c"
-    break;
-
-  case 65: /* Multop: T_AND  */
-#line 466 "lab7.y"
-                                                {(yyval.operator) = A_AND;}
-#line 1986 "y.tab.c"
-    break;
-
-  case 66: /* Multop: T_OR  */
-#line 467 "lab7.y"
-                                               {(yyval.operator) = A_OR;}
-#line 1992 "y.tab.c"
-    break;
-
-  case 67: /* Factor: '(' Expression ')'  */
-#line 471 "lab7.y"
-                                        {
-						(yyval.node) = (yyvsp[-1].node);
-					}
-#line 2000 "y.tab.c"
-    break;
-
-  case 68: /* Factor: T_NUM  */
-#line 475 "lab7.y"
-                                        {
-						(yyval.node) = ASTCreateNode(A_NUM);
-						(yyval.node)->value = (yyvsp[0].num);
-					}
-#line 2009 "y.tab.c"
-    break;
-
-  case 69: /* Factor: Var  */
-#line 479 "lab7.y"
-                                              {(yyval.node) = (yyvsp[0].node);}
 #line 2015 "y.tab.c"
     break;
 
-  case 70: /* Factor: Call  */
-#line 480 "lab7.y"
-                                               {(yyval.node) = (yyvsp[0].node);}
+  case 54: /* Relop: T_LE  */
+#line 536 "lab7.y"
+                                       {(yyval.operator) = A_LE;}
 #line 2021 "y.tab.c"
     break;
 
-  case 71: /* Factor: T_TRUE  */
-#line 482 "lab7.y"
+  case 55: /* Relop: '<'  */
+#line 537 "lab7.y"
+                                              {(yyval.operator) = A_LESSTHAN;}
+#line 2027 "y.tab.c"
+    break;
+
+  case 56: /* Relop: '>'  */
+#line 538 "lab7.y"
+                                              {(yyval.operator) = A_GREATERTHAN;}
+#line 2033 "y.tab.c"
+    break;
+
+  case 57: /* Relop: T_GE  */
+#line 539 "lab7.y"
+                                               {(yyval.operator) = A_GE;}
+#line 2039 "y.tab.c"
+    break;
+
+  case 58: /* Relop: T_EQ  */
+#line 540 "lab7.y"
+                                               {(yyval.operator) = A_EQ;}
+#line 2045 "y.tab.c"
+    break;
+
+  case 59: /* Relop: T_NE  */
+#line 541 "lab7.y"
+                                               {(yyval.operator) = A_NE;}
+#line 2051 "y.tab.c"
+    break;
+
+  case 60: /* AdditiveExpression: Term  */
+#line 545 "lab7.y"
+                                        {
+						(yyval.node) = (yyvsp[0].node);
+						//$$->symbol = Insert(CreateTemp(), $1->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
+					}
+#line 2060 "y.tab.c"
+    break;
+
+  case 61: /* AdditiveExpression: AdditiveExpression Addop Term  */
+#line 550 "lab7.y"
+                                        {
+						if((yyvsp[-2].node)->datatype != (yyvsp[0].node)->datatype){
+							yyerror("Type mismatch on expression");
+							exit(1);
+						}
+						(yyval.node) = ASTCreateNode(A_EXPR);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+						(yyval.node)->operator = (yyvsp[-1].operator);
+						(yyval.node)->datatype = (yyvsp[-2].node)->datatype;
+						(yyval.node)->symbol = Insert(CreateTemp(), (yyvsp[-2].node)->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
+					}
+#line 2077 "y.tab.c"
+    break;
+
+  case 62: /* Addop: '+'  */
+#line 564 "lab7.y"
+                                      {(yyval.operator) = A_PLUS;}
+#line 2083 "y.tab.c"
+    break;
+
+  case 63: /* Addop: '-'  */
+#line 565 "lab7.y"
+                                              {(yyval.operator) = A_MINUS;}
+#line 2089 "y.tab.c"
+    break;
+
+  case 64: /* Term: Factor  */
+#line 568 "lab7.y"
+                                         {(yyval.node) = (yyvsp[0].node);}
+#line 2095 "y.tab.c"
+    break;
+
+  case 65: /* Term: Term Multop Factor  */
+#line 570 "lab7.y"
+                                        {
+						if((yyvsp[-2].node)->datatype != (yyvsp[0].node)->datatype){
+							yyerror("Type mismatch on expression");
+							exit(1);
+						}
+						(yyval.node) = ASTCreateNode(A_EXPR);
+						(yyval.node)->s1 = (yyvsp[-2].node);
+						(yyval.node)->s2 = (yyvsp[0].node);
+						(yyval.node)->operator = (yyvsp[-1].operator);
+						(yyval.node)->datatype = (yyvsp[-2].node)->datatype;
+						(yyval.node)->symbol = Insert(CreateTemp(), (yyvsp[-2].node)->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
+					}
+#line 2112 "y.tab.c"
+    break;
+
+  case 66: /* Multop: '*'  */
+#line 584 "lab7.y"
+                                      {(yyval.operator) = A_TIMES;}
+#line 2118 "y.tab.c"
+    break;
+
+  case 67: /* Multop: '/'  */
+#line 585 "lab7.y"
+                                              {(yyval.operator) = A_DIVIDES;}
+#line 2124 "y.tab.c"
+    break;
+
+  case 68: /* Multop: T_AND  */
+#line 586 "lab7.y"
+                                                {(yyval.operator) = A_AND;}
+#line 2130 "y.tab.c"
+    break;
+
+  case 69: /* Multop: T_OR  */
+#line 587 "lab7.y"
+                                               {(yyval.operator) = A_OR;}
+#line 2136 "y.tab.c"
+    break;
+
+  case 70: /* Factor: '(' Expression ')'  */
+#line 591 "lab7.y"
+                                        {
+						(yyval.node) = (yyvsp[-1].node);
+					}
+#line 2144 "y.tab.c"
+    break;
+
+  case 71: /* Factor: T_NUM  */
+#line 595 "lab7.y"
+                                        {
+						(yyval.node) = ASTCreateNode(A_NUM);
+						(yyval.node)->value = (yyvsp[0].num);
+						(yyval.node)->datatype = A_INTTYPE;
+					}
+#line 2154 "y.tab.c"
+    break;
+
+  case 72: /* Factor: Var  */
+#line 600 "lab7.y"
+                                              {(yyval.node) = (yyvsp[0].node);}
+#line 2160 "y.tab.c"
+    break;
+
+  case 73: /* Factor: Call  */
+#line 601 "lab7.y"
+                                               {(yyval.node) = (yyvsp[0].node);}
+#line 2166 "y.tab.c"
+    break;
+
+  case 74: /* Factor: T_TRUE  */
+#line 603 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_TRUE);
+						(yyval.node)->datatype = A_BOOLEANTYPE;
 					}
-#line 2029 "y.tab.c"
+#line 2175 "y.tab.c"
     break;
 
-  case 72: /* Factor: T_FALSE  */
-#line 486 "lab7.y"
+  case 75: /* Factor: T_FALSE  */
+#line 608 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_FALSE); 
+						(yyval.node)->datatype = A_BOOLEANTYPE;
 					}
-#line 2037 "y.tab.c"
+#line 2184 "y.tab.c"
     break;
 
-  case 73: /* Factor: T_NOT Factor  */
-#line 490 "lab7.y"
+  case 76: /* Factor: T_NOT Factor  */
+#line 613 "lab7.y"
                                         {
-						(yyval.node) = ASTCreateNode(A_NOT);
+						if((yyvsp[0].node)->datatype != A_BOOLEANTYPE){
+							yyerror("NOT operator expects boolean");
+							exit(1);
+						}
+						(yyval.node) = ASTCreateNode(A_EXPR);
+						(yyval.node)->operator = A_NOT;
 						(yyval.node)->s1 = (yyvsp[0].node);
+						(yyval.node)->datatype = (yyvsp[0].node)->datatype;
 					}
-#line 2046 "y.tab.c"
+#line 2199 "y.tab.c"
     break;
 
-  case 74: /* Call: T_ID '(' Args ')'  */
-#line 497 "lab7.y"
+  case 77: /* Call: T_ID '(' Args ')'  */
+#line 626 "lab7.y"
                                         {
+						//Check if it is in the symtable
+						struct SymbTab *p;
+						p = Search((yyvsp[-3].string), 0, 0);
+						if(p == NULL){
+							yyerror((yyvsp[-3].string));
+							yyerror("Function is used but not in table");
+							exit(1);
+						}
+
+						//Check is symbol is a function
+						if(p->SubType != SYM_FUNCTION){
+							yyerror((yyvsp[-3].string));
+							yyerror("Function name is not defined as a function");
+							exit(1);
+						}
+
+						//Check to see if actual and formals match in length and type.
+						if(check_params(p->fparms, (yyvsp[-1].node)) == 0){
+							yyerror((yyvsp[-3].string));
+							yyerror("Parameter usage is incorrect");
+							exit(1);
+						}
+
 						(yyval.node) = ASTCreateNode(A_CALL);
 						(yyval.node)->s1 = (yyvsp[-1].node);
 						(yyval.node)->name = (yyvsp[-3].string);
+						(yyval.node)->symbol = p;
+						(yyval.node)->datatype = p->Declared_Type;
 					}
-#line 2056 "y.tab.c"
+#line 2234 "y.tab.c"
     break;
 
-  case 75: /* Args: %empty  */
-#line 505 "lab7.y"
+  case 78: /* Args: %empty  */
+#line 659 "lab7.y"
                                         {
 						(yyval.node) = NULL;
 					}
-#line 2064 "y.tab.c"
+#line 2242 "y.tab.c"
     break;
 
-  case 76: /* Args: ArgList  */
-#line 509 "lab7.y"
+  case 79: /* Args: ArgList  */
+#line 663 "lab7.y"
                                         {
 						(yyval.node) = (yyvsp[0].node);
 					}
-#line 2072 "y.tab.c"
+#line 2250 "y.tab.c"
     break;
 
-  case 77: /* ArgList: Expression  */
-#line 516 "lab7.y"
+  case 80: /* ArgList: Expression  */
+#line 670 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_ARGLIST);
 						(yyval.node)->s1 = (yyvsp[0].node);
+						(yyval.node)->symbol = Insert(CreateTemp(), (yyvsp[0].node)->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
-#line 2081 "y.tab.c"
+#line 2260 "y.tab.c"
     break;
 
-  case 78: /* ArgList: Expression ',' ArgList  */
-#line 521 "lab7.y"
+  case 81: /* ArgList: Expression ',' ArgList  */
+#line 676 "lab7.y"
                                         {
 						(yyval.node) = ASTCreateNode(A_ARGLIST);
 						(yyval.node)->s1 = (yyvsp[-2].node);
 						(yyval.node)->s2 = (yyvsp[0].node);
+						(yyval.node)->symbol = Insert(CreateTemp(), (yyvsp[-2].node)->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
-#line 2091 "y.tab.c"
+#line 2271 "y.tab.c"
     break;
 
 
-#line 2095 "y.tab.c"
+#line 2275 "y.tab.c"
 
       default: break;
     }
@@ -2284,7 +2464,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 529 "lab7.y"
+#line 685 "lab7.y"
 	/* end of rules, start of program */
 
 /*
@@ -2293,5 +2473,6 @@ Postconditions: yyparse is called and main exits.
 */
 int main(){ 
 	yyparse();
+	Display();
 	ASTprint(0, program);	
 } //End of main

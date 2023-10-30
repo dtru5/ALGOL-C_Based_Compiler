@@ -506,8 +506,8 @@ SimpleExpression 	: AdditiveExpression {$$ = $1;}
 						$$ = ASTCreateNode(A_EXPR);
 						$$->s1 = $1;
 						$$->s2 = $3;
-						$$->operator = $2;
-						$$->datatype = A_BOOLEANTYPE;
+						$$->operator = $2; //Set the operator to be the Relop ops
+						$$->datatype = A_BOOLEANTYPE; //Set the datatype to be type boolean
 						$$->symbol = Insert(CreateTemp(), $$->datatype, SYM_SCALAR, LEVEL, 1, OFFSET++);
 					}
 					;
