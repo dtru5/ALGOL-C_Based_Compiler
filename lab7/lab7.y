@@ -1,59 +1,38 @@
 %{
 /*
     Name: Dominik Trujillo
-    Date: 09/26/2023
-    Lab: LAB 6 ALGOL Abstract Syntax Tree
-    Purpose: The purpose of this lab is to enhance our existing parsing and syntax-checking capabilities by extending 
-    the functionality of the YACC program. Building upon the knowledge gained in previous
-    labs, the primary objective is to create an Abstract Syntax Tree (AST), which serves as an Intermediate Representation 
-    (IR) data structure for the parsed input program. This AST will facilitate the execution of multiple passes over the 
-    source code that is given.
+    Date: 10/29/2023
+    Lab: LAB 7 ALGOL -- add symbol table and type checking
+    Purpose: The objective of this lab is to enhance a compiler's functionality by incorporating a symbol table, semantic actions, 
+	and rudimentary type checking. The key goals and requirements of this lab include:
 
-    To achieve this, our primary task is to modify the YACC program so that it constructs 
-    the AST during the shift/reduce processes. This involves adding semantic actions to each production rule, 
-    enabling the creation of AST nodes, linking these nodes to represent the program's structure, and ensuring 
-    that the relevant information is attached to the yylval companion stack. These AST nodes will be of different 
-    types, providing us with valuable insights into the program's structure.
+	Symbol Table Management: To facilitate proper scope management and variable tracking, the compiler will maintain a static 
+	scope counter referred to as "level." When entering a compound statement, the level is incremented, and upon exiting, it is
+	decremented. During the exit, all symbols defined at that level are removed from the symbol table. Offsets are adjusted 
+	accordingly to account for the memory allocated to the removed symbols. New variables must be inserted into the symbol table 
+	when declared, including information about their level and size. The offset for each variable is assigned based on its type, 
+	with scalars assigned 1, arrays their respective sizes, and functions using registers for return values instead of memory.
 
-    Upon successful parsing and construction of the AST using the YACC program, the ultimate objective is to 
-    have a main() program that prints out the AST. This printout should be designed to reflect the structure of the 
-    input program, similar to the example provided in the lab instructions.
+	Type Checking: A fundamental type checking mechanism is implemented to prevent illegal operations, such as combining INT and 
+	VOID types in expressions. Variables must be used in the correct context, distinguishing between scalars, arrays, and functions. 
+	Type compatibility is enforced for assignment statements and expressions to ensure the integrity of the generated code.
 
-    Key tasks for this lab include:
+	Symbol Table Requirements: The YACC file is modified to incorporate the symbol table, enabling the compiler to manage variable
+	declarations and usages efficiently. Upon the completion of a compound statement, all variables defined within that context are 
+	displayed, and subsequently, they are removed from the symbol table. The verification process ensures that variable names are both
+	defined and used correctly. Type inheritance is implemented for expressions. Furthermore, the symbol table maintains the level for
+	each entry, with level 0 reserved for global variables and functions, level 1 for function parameters and the primary compound 
+	statement of the function. The level is incremented as nested compound statements are encountered and decremented when exiting these nested scopes.
 
-    -Creating (in this case we'll be using and updating the given via the canvas page) a separate "ast.c" and "ast.h" file 
-    to house the Abstract Syntax Tree code.
-
-    Adding semantic actions to each production rule in the ALGOL-C submission from the previous 
-    lab to ensure AST construction.
-
-    Developing an AST printing routine to assist in debugging the semantic actions.
-
-    Using "AST()" directives as presented in class to guide the development of the Abstract Syntax Tree.
-
-    Documenting all major differences introduced in this lab compared to previous submissions, especially 
-    any changes to production rules.
-
-    Preparing to explain and discuss the code during potential in-person assessments.
-
-    Ensuring that the YACC code remains consistent with the LAB 5 submission, without altering 
-    non-terminal and terminal names.
-
-    Limiting the use of pointers in the AST to "s1" and "s2" as pointers to other AST nodes, without 
-    introducing additional pointers or alternative names.
-
-    Adhering to the naming conventions, such as starting AST enumerated types with "A_" and token names from 
-    LEX with "T_" prefixes, to avoid deductions.
-
-    By successfully completing these tasks, we aim to extend our compiler construction capabilities, enabling the 
-    creation and utilization of an Abstract Syntax Tree for improved program analysis and code generation. 
-    This lab represents a crucial step in achieving our ultimate goal of generating assembly code and running it on a simulator.
+	In summary, this lab's primary objective is to equip the compiler with the capability to manage
+	symbol tables effectively, perform rudimentary type checking, and handle scope management. These enhancements aim to 
+	improve the compiler's code generation process, making it more robust and reliable.
 */
 
 
 	/* begin specs */
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h> //Added stdlib.h to get rid of warning errors on exit call.
 #include <ctype.h>
 #include "ast.h"
 #include "symtable.h"
@@ -146,7 +125,8 @@ VarDeclaration 		: TypeSpecifier VarList ';'
 						p = $2;
 						while(p != NULL){
 							p->datatype = $1;
-							p->symbol->Declared_Type = $1;
+							p->symbol->Declared_Type = $1; //Setting the symbol's declared type with the TypeSpecifier
+							//Although redundant this helps with other functions like in check params.
 							p = p->s1;
 							}
 					}
@@ -155,17 +135,15 @@ VarDeclaration 		: TypeSpecifier VarList ';'
 /* a T_ID followed by an open bracket, T_NUM, close bracket, comma, and a VarList */	       
 VarList 			: T_ID  
 						{
+							//Symbol not there, stick it in
 							if (Search($1, LEVEL, 0) == NULL){
-								//Symbol not there, stick it in
 								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
 								$$->name = $1; //Set the name with the given ID
-								//The prototype for insert for reference.
-								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
-								//Set p's symbol to be the node that is returned after inserting it into the symtable
+								//Set symbol to be the node that is returned after inserting it into the symtable, type scalar.
 								$$->symbol = Insert($1, A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
-								OFFSET++;
+								OFFSET++; //Increment offset.
 							}
-							else{
+							else{ //Else, the symbol is in the table already, then exit.
 								yyerror($1);
 								yyerror("Already defined");
 								exit(1);
@@ -173,16 +151,17 @@ VarList 			: T_ID
 
 						}
 					| T_ID '[' T_NUM ']' 
-						{												
+						{					
+							//Symbol not there, stick it in							
 							if (Search($1, LEVEL, 0) == NULL){
 								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
 								$$->name = $1; //Set the name to be the ID
 								$$->value = $3; //Set the value with the given NUM
-								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
+								//Set symbol to be the node that is returned after inserting it into the symtable, type array.
 								$$->symbol = Insert($1, A_UNKNOWN, SYM_ARRAY, LEVEL, $3, OFFSET);
-								OFFSET += $3;
+								OFFSET += $3; //Increase offset with the value of the array.
 							}
-							else{
+							else{ //Else, the symbol is in the table already, then exit.
 								yyerror($1);
 								yyerror("Already defined");
 								exit(1);
@@ -190,19 +169,16 @@ VarList 			: T_ID
 						} 
 					| T_ID ',' VarList 
 						{
+							//Symbol not there, stick it in
 							if (Search($1, LEVEL, 0) == NULL){
 								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
 								$$->name = $1; //Set the name with ID
 								$$->s1 = $3; //Set the s1 branch to be another Varlist
-
-								//The prototype for insert for reference.
-								//Insert(char *name, enum DataTypes my_assigned_type, enum  SYMBOL_SUBTYPE subtype, int  level, int mysize, int offset )
-								
 								//Set p's symbol to be the node that is returned after inserting it into the symtable
 								$$->symbol = Insert($1, A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
-								OFFSET++; 
+								OFFSET++; //Increment offset.
 							}
-							else{
+							else{ //Else, the symbol is in the table already, then exit.
 								yyerror($1);
 								yyerror("Already defined");
 								exit(1);
@@ -210,6 +186,7 @@ VarList 			: T_ID
 						} 
 					| T_ID '[' T_NUM ']' ',' VarList 
 						{
+							//Symbol not there, stick it in
 							if (Search($1, LEVEL, 0) == NULL){
 								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
 								$$->name = $1; //Set the name with the ID
@@ -223,7 +200,7 @@ VarList 			: T_ID
 								$$->symbol = Insert($1, A_UNKNOWN, SYM_ARRAY, LEVEL, $3, OFFSET);
 								OFFSET += $3;
 							}
-							else{
+							else{ //Else, the symbol is in the table already, then exit.
 								yyerror($1);
 								yyerror("Already defined");
 								exit(1);
@@ -244,12 +221,12 @@ FunDeclaration 		: TypeSpecifier T_ID '('
 							if(Search($2,LEVEL, 0) == NULL){
 								//insert
 								Insert($2, $1, SYM_FUNCTION, LEVEL, 0, 0);
-								GOFFSET = OFFSET;
-								OFFSET = 2;
-								maxoffset = OFFSET;
+								GOFFSET = OFFSET; //Set the global offset to be current offset.
+								OFFSET = 2; //Reserve the 2 spaces needed for registers by setting offset to be 2.
+								maxoffset = OFFSET; //Set maxoffset to be offset.
 							}
 							else{
-								//BARF
+								//Exit if the function has already been defined.
 								yyerror($2);
 								yyerror("Cannot create function, name is use");
 								exit(1);
@@ -263,20 +240,20 @@ FunDeclaration 		: TypeSpecifier T_ID '('
 						} 
 						CompoundStmt 
 						{
-							$$ = ASTCreateNode(A_FUNDEC);
+							$$ = ASTCreateNode(A_FUNDEC); //Create a new ASTNode called A_FUNDEC.
 							$$->name = $2; //Setting the name with the ID
 							$$->datatype = $1; //Setting the datatype with the given TypeSpecifier
 							$$->s1 = $5; //Setting the s1 branch to be the Params
 							$$->s2 = $8; //Setting s2 branch to be the Compound statement
-							$$->symbol = Search($2, LEVEL, 0);
-							$$->symbol->offset = maxoffset;
-							OFFSET = GOFFSET;
+							$$->symbol = Search($2, LEVEL, 0); //Set the symbol to be the searched symbol.
+							$$->symbol->offset = maxoffset; //Set the symbol's offset to be the max offset.
+							OFFSET = GOFFSET; //Set offset to be the global offset.
 						}
 					;
 /* 7. A Params can be a T_VOID or a ParamList */		
 Params 				: T_VOID 
 					{
-						$$ = NULL;
+						$$ = NULL; //If T_VOID is read, then set the node to be NULL.
 					}
 					| ParamList 
 					{
@@ -298,14 +275,15 @@ ParamList			: Param
 /* 9. A Param can be a TypeSpecifier followed by a T_ID or a TypeSpecifier followed by a T_ID open and close brackets */
 Param 				: TypeSpecifier T_ID 
 					{
+						//If the symbol hasn't been inserted,
 						if(Search($2, 1, 0) == NULL){
-							$$ = ASTCreateNode(A_PARAM);
-							$$->name = $2;
-							$$->symbol = Insert($2, $1, SYM_SCALAR, LEVEL+1, 1, OFFSET);
-							$$->datatype = $$->symbol->Declared_Type;
-							OFFSET++;
+							$$ = ASTCreateNode(A_PARAM); //Set the node to be an ASTNode of type A_PARAM.
+							$$->name = $2; //Set the name with T_ID.
+							$$->symbol = Insert($2, $1, SYM_SCALAR, LEVEL+1, 1, OFFSET); //Set the symbol with the returned symtab from the inserting call.
+							$$->datatype = $$->symbol->Declared_Type; //Set the datatype of the node with the symbol's declared type.
+							OFFSET++; //Increment offset.
 						}
-						else{
+						else{ // Else, if parameter is already in use, then exit.
 							yyerror($2);
 							yyerror("Parameter name already used");
 							exit(1);
@@ -314,14 +292,14 @@ Param 				: TypeSpecifier T_ID
 					| TypeSpecifier T_ID '[' ']' 
 					{
 						if(Search($2, 1, 0) == NULL){
-							$$ = ASTCreateNode(A_PARAM);
-							$$->name = $2;
-							$$->value = -1;
-							$$->symbol = Insert($2, $1, SYM_ARRAY, LEVEL+1, 1, OFFSET);
-							$$->datatype = $$->symbol->Declared_Type;
-							OFFSET++;
+							$$ = ASTCreateNode(A_PARAM); //Set the node to be an ASTNode of type A_PARAM.
+							$$->name = $2; //Set the name with T_ID.
+							$$->value = -1; //Set the value to be -1 for other functions to know that they're processing an array A_PARAM.
+							$$->symbol = Insert($2, $1, SYM_ARRAY, LEVEL+1, 1, OFFSET); //Set the symbol with the returned symtab from the inserting call.
+							$$->datatype = $$->symbol->Declared_Type; //Set the datatype of the node with the symbol's declared type.
+							OFFSET++; //Increment offset.
 						}
-						else{
+						else{ // Else, if parameter is already in use, then exit.
 							yyerror($2);
 							yyerror("Parameter name already used");
 							exit(1);
@@ -329,28 +307,29 @@ Param 				: TypeSpecifier T_ID
 					}
 					;
 /* 10. A CompoundStmt can be a T_BEGIN followed by LocalDeclarations, StatementList, and T_END */	
-CompoundStmt 		: T_BEGIN {LEVEL++;} LocalDeclarations StatementList T_END
+CompoundStmt 		: T_BEGIN {LEVEL++;} //Increment the level when a T_BEGIN is read in
+					  LocalDeclarations StatementList T_END
 					{
-						$$ = ASTCreateNode(A_COMPOUND);
-						$$->s1 = $3;
-						$$->s2 = $4;
-						if(OFFSET > maxoffset){
-							maxoffset = OFFSET;
+						$$ = ASTCreateNode(A_COMPOUND); //Set the node to be an ASTNode called A_COMPOUND
+						$$->s1 = $3; //Set the s1 branch to be LocalDeclarations.
+						$$->s2 = $4; //Set the s2 branch to be StatementList
+						if(OFFSET > maxoffset){ //If the current offset is greater then the max,
+							maxoffset = OFFSET; //then set the maxoffset to be the current offset value.
 						}
-						Display();
-						OFFSET -= Delete(LEVEL);
-						LEVEL--;
+						Display(); //Display the symbol table
+						OFFSET -= Delete(LEVEL); //Set offset with the subtraction of the value returned from the called Delete function given the param LEVEL.
+						LEVEL--; //Decrement LEVEL.
 					}
 					;
 /* 11. LocalDeclarations can be either empty or a VarDeclaration followed by a LocalDeclarations */
 LocalDeclarations 	: /* empty */
 					{
-						$$ = NULL;
+						$$ = NULL; //If local declaration is empty, then set the node to be null.
 					}
 		  			| VarDeclaration LocalDeclarations 
 					{
-						$$ = $1;
-						$$->s2 = $2;
+						$$ = $1; //Set the node to be a VarDeclaration
+						$$->s2 = $2; //Set the s2 branch to be LocalDeclarations.
 					}
 		  			;
 /* 12. A StatementList can either be empty or a Statement followed by a StatementList */	
