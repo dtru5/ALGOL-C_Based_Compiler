@@ -14,6 +14,10 @@ main:
         sw $0, 12($sp)  # store 0 into memory -- accumulating variable
 
         #Ask user for input
+        la $a0, str2
+        li $v0 4
+        syscall
+
         li $v0, 5 #read a number from input
         syscall #reading a number
         move $t1, $v0 #copy v0 to t1
@@ -62,7 +66,10 @@ loop:
   .data
         .align 0
 str:
-        .asciiz "The sum from 0 .. "
+        .asciiz "sum of squares from 1 to "
 str1:
         .asciiz " is \n"
+
+str2:
+        .asciiz "Please enter a number: "
         
