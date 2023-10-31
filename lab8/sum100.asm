@@ -1,4 +1,10 @@
- 
+#       Name: Dominik Trujillo
+#       Date: 10/31/2023
+#       Lab: LAB8 MIPS with MARS simulator
+#       Purpose: The purpose of this lab is to help understand how to run a MIPS simulator as well as
+#       understanding the basics of MIPS instruction set and that we have the resources to
+#       look up any information related to MIPS and its instruction set.
+
       #  this program calculates the sum of squares up to and including 100
            
 
@@ -21,6 +27,7 @@ main:
         li $v0, 5 #read a number from input
         syscall #reading a number
         move $t1, $v0 #copy v0 to t1
+        sw $t1, 16($sp) # store t1 value into memory -- read in variable
  
        
 loop:
@@ -42,7 +49,7 @@ loop:
         nop   # 
 
         #print the inputted number
-        move $a0, $t1
+        lw $a0, 16($sp)
         li $v0 1 #   Print the number
         syscall
 
