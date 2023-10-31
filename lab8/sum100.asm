@@ -66,10 +66,9 @@ loop:
   .data
         .align 0
 str:
-        .asciiz "sum of squares from 1 to "
+        .asciiz "The sum of squares from 1 to "
 str1:
-        .asciiz " is \n"
-
+        .asciiz " is: "
 str2:
         .asciiz "Please enter a number: "
         
