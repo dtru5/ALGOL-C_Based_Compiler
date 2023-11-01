@@ -43,28 +43,28 @@ loop:
         nop   # 
         
         #print first part of string.
-        la $a0, str
+        la $a0, str # Load a0 with str 
         li $v0 4  #   print the string
-        syscall # 
-        nop   # 
+        syscall # system call
+        nop   # no operation
 
         #print the inputted number
-        lw $a0, 16($sp)
+        lw $a0, 16($sp) # load a0 with read in variable stored at stack pointer plus 16
         li $v0 1 #   Print the number
-        syscall
+        syscall # system call
 
         #print the number $t1
-        la $a0, str1
-        li $v0 4
-        syscall
-        nop
+        la $a0, str1 # load a0 with str1
+        li $v0 4 # print the string
+        syscall # system call
+        nop # no operation 
         
-        lw $a0, 12($sp)
+        lw $a0, 12($sp) # load a0 with the sum variable which is at stack pointer plus 12
         li $v0 1 #   Print the number
         syscall
         
        
-        lw $ra, 4($sp)
+        lw $ra, 4($sp) # load ra with stack pointer plus 4
         lw $sp , ($sp)  # put backl Ra and SP
         
         li $v0, 10 
