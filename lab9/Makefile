@@ -5,10 +5,10 @@
 
 all: lab9
 
-lab9:	ast.c ast.h symtable.c symtable.h lab9.y lab9.l
+lab9:	ast.c ast.h symtable.c symtable.h lab9.y lab9.l emit.c emit.h
 	yacc -dv lab9.y
 	lex lab9.l
-	gcc y.tab.c lex.yy.c ast.c symtable.c -o lab9	
+	gcc lex.yy.c y.tab.c ast.c symtable.c emit.c -o lab9	
 
 clean: 
 	rm -f lab9

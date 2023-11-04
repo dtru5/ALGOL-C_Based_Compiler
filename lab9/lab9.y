@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h> //Added stdlib.h to get rid of warning errors on exit call.
 #include <ctype.h>
+#include <string.h>
 #include "ast.h"
 #include "symtable.h"
 
@@ -51,6 +52,7 @@ int GOFFSET; //Holder for global offset when we enter and exit a fucntion defini
 int maxoffset; //Total number of words a function needs
 
 extern int lineno; //Global variable for line number counter.
+extern int mydebug;
 extern ASTnode * program; //Brought over program from ast.c
 
 /*
@@ -680,8 +682,39 @@ ArgList 			: Expression
 Preconditions: Parser has been properly initialized and configured with proper tokens.
 Postconditions: yyparse is called and main exits.
 */
-int main(){ 
+int main(int argc, char * argv[]){ 
+	FILE *fp = NULL;
+	char s[100];
+
+	for(int i = 1; i < argc; i++){
+		if(strcmp("-d", argv[i]) == 0){
+			mydebug = 1;
+		}
+
+		if(strcmp("-o", argv[i]) == 0){
+			//Assume that argv[i+1] is on the line and we are not going to check.
+			strcpy(s, argv[i+1]);
+			strcat(s,".asm");
+
+			if(mydebug){
+				printf("Opening file %s\n", s);
+			}
+
+			fp=fopen(s,"w");
+			if(fp == NULL){
+				printf("Unable to open %s\n", s);
+				exit(1);
+			} //end of if fopen
+		} //end of strcmp -o
+	} //end of for loop
+
+	if(fp == NULL){
+		printf("No filename provided, must use -o option\n", s);
+		exit(1);
+	} //end of if not -o option.
+
 	yyparse();
+	fprintf(stderr, "The input is syntactically correct\n");
 	Display();
 	ASTprint(0, program);	
 } //End of main
