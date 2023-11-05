@@ -1,21 +1,12 @@
-int blah[100], p;
+// words
 
-boolean x;
+int A[100];
 
-int foo(int np, void a)
+int f(int x, int y[])
 begin
 end
 
-int bar(void)
+int main(int x)
 begin
-end
-
-int main (void)
-begin
-    boolean x, y;
-    int boo;
-
-    x < y;
-
-    
+    f(x , A[1]);
 end

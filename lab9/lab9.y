@@ -43,6 +43,7 @@
 #include <string.h>
 #include "ast.h"
 #include "symtable.h"
+#include "emit.h"
 
 int yylex();
 
@@ -324,7 +325,9 @@ CompoundStmt 		: T_BEGIN {LEVEL++;} //Increment the level when a T_BEGIN is read
 						if(OFFSET > maxoffset){ //If the current offset is greater then the max,
 							maxoffset = OFFSET; //then set the maxoffset to be the current offset value.
 						}
-						Display(); //Display the symbol table
+						if(mydebug){
+							Display(); //Display the symbol table
+						}
 						OFFSET -= Delete(LEVEL); //Set offset with the subtraction of the value returned from the called Delete function given the param LEVEL.
 						LEVEL--; //Decrement LEVEL.
 					}
@@ -714,7 +717,12 @@ int main(int argc, char * argv[]){
 	} //end of if not -o option.
 
 	yyparse();
-	fprintf(stderr, "The input is syntactically correct\n");
-	Display();
-	ASTprint(0, program);	
-} //End of main
+
+	if(mydebug){
+		fprintf(stderr, "The input is syntactically correct\n");
+		Display();
+		ASTprint(0, program);	
+	}
+
+	EMIT(program, fp);
+} //End of main 
