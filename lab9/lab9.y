@@ -148,6 +148,7 @@ VarList 			: T_ID
 							if (Search($1, LEVEL, 0) == NULL){
 								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
 								$$->name = $1; //Set the name with the given ID
+								$$->value = 1;
 								//Set symbol to be the node that is returned after inserting it into the symtable, type scalar.
 								$$->symbol = Insert($1, A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
 								OFFSET++; //Increment offset.
@@ -183,6 +184,7 @@ VarList 			: T_ID
 								$$ = ASTCreateNode(A_VARDEC); //Create a new A_VARDEC node
 								$$->name = $1; //Set the name with ID
 								$$->s1 = $3; //Set the s1 branch to be another Varlist
+								$$->value = 1;
 								//Set p's symbol to be the node that is returned after inserting it into the symtable
 								$$->symbol = Insert($1, A_UNKNOWN, SYM_SCALAR, LEVEL, 1, OFFSET);
 								OFFSET++; //Increment offset.

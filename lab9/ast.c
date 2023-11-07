@@ -67,6 +67,7 @@ ASTnode *ASTCreateNode(enum ASTtype mytype)
     p->s2=NULL;
     p->value=0;
     p->name = NULL;
+    p->label = NULL;
     p->symbol = NULL;
     return(p);
 }
@@ -120,7 +121,7 @@ void ASTprint(int level,ASTnode *p)
                         printf("Variable "); //Print out the variable with its given datatype and name.
                         printf("%s ", DataTypeToString(p->symbol->Declared_Type)); 
                         printf("%s",p->name);
-                        if (p->value > 0){ //If the p value is greater than zero, then it is an array
+                        if (p->value > 1){ //If the p value is greater than zero, then it is an array
                            printf("[%d]",p->value);
                            printf(" with offset %d and level %d", p->symbol->offset, p->symbol->level);
                         }
