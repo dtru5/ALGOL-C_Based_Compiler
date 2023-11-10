@@ -10,6 +10,8 @@ Purpose:
 #include "symtable.h"
 #include "ast.h"
 
+#define WSIZE 4
+
 int labelNUM = 0;
 char labelBuffer[20]; 
 
@@ -32,7 +34,7 @@ void EMIT_GLOBALS(ASTnode * p, FILE * fp){
     }
 
     if(p->symbol != NULL && p->nodetype == A_VARDEC && p->symbol->level == 0){
-        int space = 4 * p->value;
+        int space = WSIZE * p->value;
         fprintf(fp, "%s:\t\t.space %d\n", p->name, space);
     }
 
@@ -85,8 +87,59 @@ void emit_ast(ASTnode * p, FILE * fp){
                          emit_ast(p->s2, fp);
                          break;
 
+        case A_FUNDEC:   emit_function_dec(p, fp);
+                         break;
+
+        case A_COMPOUND: emit_ast(p->s2,fp); 
+                         break;
+
+        case A_STATEMENTLIST: emit_ast(p->s1, fp);
+                         emit_ast(p->s2, fp);
+                         break;
+
+        case A_WRITE:   emit_write(p, fp);
+                         break;
+
         default: printf("emit_ast unknown nodetype %d\n", p->nodetype);
                  printf("Exiting program: FIX ME\n");
                  exit(1);
     }
 }//End of emit_ast
+
+//PRE: PTR to a A_FUNDEC node
+//POST: MIPS code for the function, using emit_ast as a helper
+void emit_function_dec(ASTnode * p, FILE * fp){
+    char s[100];
+
+    //Printing out the function label
+    emit(fp, p->name, "", "Start of function");
+    fprintf(fp,"\n");
+    sprintf(s,"subu $a0, $sp, %d",p->symbol->offset*WSIZE);
+    emit(fp, "", s, "adjust the stack for function setup");
+	emit(fp, "", "sw $sp, ($a0)","remember old SP");
+	emit(fp, "", "sw $ra, 4($a0)", "remember current Return address");
+	emit(fp, "", "move $sp, $a0", "adjust the stack pointer");
+    fprintf(fp,"\n\n");
+
+    emit_ast(p->s2, fp); //Calls for compound statement.
+
+
+    emit(fp, "", "lw $ra 4($sp)", "restore old environment RA");
+	emit(fp, "", "lw $sp ($sp)", "Return from function store SP");
+
+    //Printing out the ending code to exit from main.
+    if(strcmp(p->name, "main") == 0){
+        emit(fp, "", "li $v0, 10", "Exit from Main we are done");
+	    emit(fp, "", "syscall", "EXIT everything");
+    }
+    else{
+        //FIX FIX FIX for function call return.
+    }
+
+    //PRE: PTR to a Write node.
+    //POST: MIPS code to perform Write.
+    void emit_write(ASTnode *p, FILE *fp){
+
+    }
+
+}

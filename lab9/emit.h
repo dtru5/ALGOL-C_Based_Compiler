@@ -24,4 +24,8 @@ void emit(FILE * fp, char * label, char * command, char * comment);
 
 void emit_ast(ASTnode * p, FILE * fp);
 
+void emit_function_dec(ASTnode * p, FILE * fp);
+
+void emit_write(ASTnode *p, FILE *fp);
+
 #endif
