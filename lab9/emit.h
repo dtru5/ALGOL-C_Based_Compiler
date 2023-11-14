@@ -28,4 +28,12 @@ void emit_function_dec(ASTnode * p, FILE * fp);
 
 void emit_write(ASTnode *p, FILE *fp);
 
+void emit_expr(ASTnode * p, FILE * fp);
+
+void emit_var(ASTnode * p, FILE * fp);
+
+void emit_read(ASTnode * p, FILE * fp);
+
+void emit_expr_helper(ASTnode * p, FILE * fp);
+
 #endif

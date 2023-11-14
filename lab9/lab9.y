@@ -597,11 +597,13 @@ Factor				: '(' Expression ')'
 					| T_TRUE 
 					{
 						$$ = ASTCreateNode(A_TRUE); //Set the node to be an A_TRUE node
+						$$->value = 1;
 						$$->datatype = A_BOOLEANTYPE; //Set the datatype to be boolean type
 					}
 					| T_FALSE 
 					{
 						$$ = ASTCreateNode(A_FALSE); //Set the node to be an A_FALSE node
+						$$->value = 0;
 						$$->datatype = A_BOOLEANTYPE; //Set the datatype to be boolean type
 					}
 					| T_NOT Factor 

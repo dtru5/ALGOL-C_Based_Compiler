@@ -1,7 +1,6 @@
-int A[100];
 int x;
-
 int main(void)
-    begin
-        write "hello world";
-    end
+begin
+    write 100 / 5;
+    write "\n";
+end
