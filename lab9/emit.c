@@ -28,6 +28,8 @@ void EMIT(ASTnode * p, FILE * fp){
     emit_ast(p, fp);
 }
 
+//PRE:
+//POST:
 void EMIT_GLOBALS(ASTnode * p, FILE * fp){
     if(p == NULL){
         return;
@@ -42,6 +44,8 @@ void EMIT_GLOBALS(ASTnode * p, FILE * fp){
     EMIT_GLOBALS(p->s2, fp);
 }
 
+//PRE:
+//POST:
 void EMIT_STRINGS(ASTnode * p, FILE * fp){
     if(p == NULL) return;
 
@@ -54,11 +58,9 @@ void EMIT_STRINGS(ASTnode * p, FILE * fp){
     EMIT_STRINGS(p->s2, fp);
 }
 
-char* CreateLabel() {
-    //-----------QUESTION: WHY DIDN'T THIS WORK?------------
-    // snprintf(labelBuffer, sizeof(labelBuffer), "_L%d", labelNUM++);
-    // return labelBuffer;
-    
+//PRE:
+//POST:
+char* CreateLabel() {    
     char hold[100];
     char * label;
     sprintf(hold, "_L%d", GLABEL++);
@@ -108,6 +110,18 @@ void emit_ast(ASTnode * p, FILE * fp){
                          break;
 
         case A_READ:    emit_read(p, fp);
+                        break;
+
+        case A_ASSIGNMENTSTMT:
+                        emit_assignment(p, fp);
+                        break;
+
+        case A_IF:
+                        emit_if(p, fp);
+                        break;
+
+        case A_ITERATIONSTMT: 
+                        emit_iterationstmt(p, fp);
                         break;
 
         default: printf("emit_ast unknown nodetype %d\n", p->nodetype);
@@ -194,73 +208,84 @@ void emit_function_dec(ASTnode * p, FILE * fp){
 
             case A_EXPR: 
                 switch (p->operator){
-                    char placeholder[100]; //New place holder char array instead of using s[].
-                    //-----------CASES FOR ADDOP EXPRESSIONS------------------
-                    case A_PLUS:
-                        emit_expr_helper(p, fp);
-	                    emit(fp, "", "add $a0, $a0, $a1","EXPR ADD");
-                        break;
+                        char placeholder[100]; //New place holder char array instead of using s[].
+                        //-----------CASES FOR ADDOP EXPRESSIONS------------------
+                        case A_PLUS:
+                            emit_expr_helper(p, fp);
+                            emit(fp, "", "add $a0, $a0, $a1","EXPR ADD");
+                            break;
 
-                    case A_MINUS:
-                        emit_expr_helper(p, fp);
-	                    emit(fp, "", "sub $a0, $a0, $a1", "EXPR SUB");
-                        break;
+                        case A_MINUS:
+                            emit_expr_helper(p, fp);
+                            emit(fp, "", "sub $a0, $a0, $a1", "EXPR SUB");
+                            break;
 
-                    //-----------CASES FOR RELOP EXPRESSIONS------------------
-                    case A_LE: //Less than or equal to
-                        emit_expr_helper(p, fp);
-                        emit(fp, "", "add $a1 ,$a1, 1", "EXPR LE add one to do compare");
-	                    emit(fp, "", "slt $a0, $a0, $a1", "EXPR LE");
-                        break;
+                        //-----------CASES FOR RELOP EXPRESSIONS------------------
+                        case A_LE: //Less than or equal to
+                            emit_expr_helper(p, fp);
+                            emit(fp, "", "add $a1 ,$a1, 1", "EXPR LE add one to do compare");
+                            emit(fp, "", "slt $a0, $a0, $a1", "EXPR LE");
+                            break;
 
-                    case A_LESSTHAN:
-                        emit_expr_helper(p, fp);
-	                    emit(fp, "", "slt $a0, $a0, $a1", "EXPR LESSTHAN");
-                        break;
+                        case A_LESSTHAN:
+                            emit_expr_helper(p, fp);
+                            emit(fp, "", "slt $a0, $a0, $a1", "EXPR LESSTHAN");
+                            break;
 
-                    case A_GREATERTHAN:
-                        emit_expr_helper(p, fp);
-	                    emit(fp, "", "slt $a0, $a1, $a0", "EXPR GREATERTHAN");
-                        break;
+                        case A_GREATERTHAN:
+                            emit_expr_helper(p, fp);
+                            emit(fp, "", "slt $a0, $a1, $a0", "EXPR GREATERTHAN");
+                            break;
 
-                    case A_GE:
-                        emit_expr_helper(p, fp);
-                        emit(fp, "", "add $a0 ,$a0, 1", "EXPR ADD GE");
-	                    emit(fp, "", "slt $a0, $a1, $a0", "EXPR GREATERTHAN");
-                        break;
+                        case A_GE:
+                            emit_expr_helper(p, fp);
+                            emit(fp, "", "add $a0 ,$a0, 1", "EXPR ADD GE");
+                            emit(fp, "", "slt $a0, $a1, $a0", "EXPR GREATERTHAN");
+                            break;
 
-                    case A_EQ:
-                        emit_expr_helper(p, fp);
-	                    emit(fp,"","slt $t2 ,$a0, $a1","EXPR EQUAL");
-                        emit(fp, "", "slt $t3 ,$a1, $a0", "EXPR EQUAL");
-                        emit(fp, "", "nor $a0 ,$t2, $t3", "EXPR EQUAL");
-                        emit(fp, "", "andi $a0, 1", "EXPR EQUAL");
-                        break;
+                        case A_EQ:
+                            emit_expr_helper(p, fp);
+                            emit(fp,"","slt $t2 ,$a0, $a1","EXPR EQUAL");
+                            emit(fp, "", "slt $t3 ,$a1, $a0", "EXPR EQUAL");
+                            emit(fp, "", "nor $a0 ,$t2, $t3", "EXPR EQUAL");
+                            emit(fp, "", "andi $a0, 1", "EXPR EQUAL");
+                            break;
 
-                    case A_NE:
-                        emit_expr_helper(p, fp);
-	                    emit(fp,"","slt $t2 ,$a0, $a1","EXPR NOT EQUAL");
-                        emit(fp, "", "slt $t3 ,$a1, $a0", "EXPR NOT EQUAL");
-                        emit(fp, "", "or $a0 ,$t2, $t3", "EXPR NOT EQUAL");
-                        break;
+                        case A_NE:
+                            emit_expr_helper(p, fp);
+                            emit(fp,"","slt $t2 ,$a0, $a1","EXPR NOT EQUAL");
+                            emit(fp, "", "slt $t3 ,$a1, $a0", "EXPR NOT EQUAL");
+                            emit(fp, "", "or $a0 ,$t2, $t3", "EXPR NOT EQUAL");
+                            break;
 
-                    //-----------CASES FOR RELOP EXPRESSIONS------------------
-                    case A_TIMES:
-                        emit_expr_helper(p, fp);
-                        emit(fp, "", "mult $a0 $a1", "EXPR MULT");
-	                    emit(fp, "", "mflo $a0", "EXPR MULT");
-                        break;
+                        //-----------CASES FOR RELOP EXPRESSIONS------------------
+                        case A_TIMES:
+                            emit_expr_helper(p, fp);
+                            emit(fp, "", "mult $a0 $a1", "EXPR MULT");
+                            emit(fp, "", "mflo $a0", "EXPR MULT");
+                            break;
 
-                    case A_DIVIDES:
-                        printf("HELLO");
-                        emit_expr_helper(p, fp);
-                        emit(fp, "", "div $a0 $a1", "EXPR DIV");
-	                    emit(fp, "", "mflo $a0", "EXPR DIV");
-                        break;
-                
-                    default:
-                        break;
-                }
+                        case A_DIVIDES:
+                            emit_expr_helper(p, fp);
+                            emit(fp, "", "div $a0 $a1", "EXPR DIV");
+                            emit(fp, "", "mflo $a0", "EXPR DIV");
+                            break;
+                    
+                        case A_AND:
+                            emit_expr_helper(p, fp);
+                            emit(fp, "", "and $a0, $a0, $a1", "EXPR AND");
+                            break;
+
+                        case A_OR:
+                            emit_expr_helper(p, fp);
+                            emit(fp, "", "or $a0, $a0, $a1", "EXPR OR");
+                            break;
+
+                        default:
+                            printf("unknown operator %d\n", p->operator);
+                            exit(1);
+                            break;
+                        }//End of operator cases.   
                         break;
 
             default: printf("emit_expr base case not know.\n");
@@ -271,18 +296,28 @@ void emit_function_dec(ASTnode * p, FILE * fp){
 
     //PRE: PTR to A_VAR
     //POST: $a0 will be the memory location of the variable.
-    void emit_var(ASTnode * p, FILE * fp){
-        char s[100];
+    void emit_var(ASTnode *p, FILE *fp) {
+    char s[100];
 
-        if(p->symbol->level == 0){
-            sprintf(s,"la $a0, %s", p->name);
-            emit(fp,"", s, "Emit var global variable");
-        }
-        else{
-            printf("FIX FIX FIX local emit_var needs helps");
-            exit(1);
-        }
+    if (p->symbol->SubType == SYM_ARRAY) {
+        emit_expr(p->s1, fp);
+        emit(fp, "", "move $a1, $a0", "VAR copy index array in a1");
+        emit(fp, "", "sll $a1, $a1, 2", "multiply the index by word size via SLL");
     }
+
+    if (p->symbol->level == 0) {
+        sprintf(s, "la $a0, %s", p->name);
+        emit(fp, "", s, "Emit var global variable");
+    } else {
+        emit(fp, "", "move $a0, $sp", "VAR local make a copy of stack pointer");
+        sprintf(s, "addi $a0, $a0, %d", p->symbol->offset * WSIZE);
+        emit(fp, "", s, "VAR local stack pointer plus offset");
+    }
+
+    if (p->symbol->SubType == SYM_ARRAY) {
+        emit(fp, "", "add $a0, $a0, $a1", "VAR array add internal offset");
+    }
+}
 
     //PRE: PTR to A_READ
     //POST: MIPS code to generate the location of a var and read it.
@@ -294,6 +329,8 @@ void emit_function_dec(ASTnode * p, FILE * fp){
         fprintf(fp,"\n\n");
     }
 
+    //PRE:
+    //POST:
     void emit_expr_helper(ASTnode * p, FILE * fp){
         char placeholder[100];
         emit_expr(p->s1, fp);
@@ -305,3 +342,64 @@ void emit_function_dec(ASTnode * p, FILE * fp){
 	    emit(fp, "", placeholder, "expression restore LHS from memory");
     }
 
+    //PRE:
+    //POST:
+    void emit_assignment(ASTnode * p, FILE * fp){
+        char s[100];
+        emit_expr(p->s2, fp);
+        sprintf(s,"sw $a0, %d($sp)",p->symbol->offset*WSIZE);
+        emit(fp, "", s, "Assign store RHS temporarily");
+        emit_var(p->s1, fp);
+        sprintf(s,"lw $a1 %d($sp)",p->symbol->offset*WSIZE);
+        emit(fp, "", s, "Assign get RHS temporarily");
+	    emit(fp, "", "sw $a1 ($a0)", "Assign place RHS into memory");
+    }
+
+    //PRE:
+    //POST:
+    void emit_if(ASTnode *p, FILE *fp) {
+        char s[100];
+        char *label_else = CreateLabel();
+        char *label_end = CreateLabel();
+
+        // Emit the conditional check
+        emit_expr(p->s1, fp);
+
+        // Branch to the else part if the condition is false
+        sprintf(s, "beq $a0 $0 %s", label_else);
+        emit(fp, "", s, "IF branch to else part\n\n");
+
+        emit(fp, "", "", "the positive portion of IF");
+
+        // Emit the positive portion of the IF statement
+        emit_ast(p->s2->s1, fp);
+
+        // Jump to the end of the IF statement
+        sprintf(s, "j %s", label_end);
+        emit(fp, "", s, "IF S1 end\n");
+
+        // Emit the label for the else part
+        emit(fp, label_else, "", "ELSE target");
+        emit(fp, "", "", "the negative  portion of IF if there is an else");
+        emit(fp, "", "", "otherwise just these lines\n");
+
+        // Emit the negative portion of the IF statement (else part)
+        emit_ast(p->s2->s2, fp);
+
+        // Emit the label for the end of the IF statement
+        emit(fp, label_end, "", "End of IF");
+    }
+
+    void emit_iterationstmt(ASTnode * p, FILE * fp){
+        char s[100];
+        char * startWhileLabel = CreateLabel();
+        char * endWhileLabel = CreateLabel();
+        emit(fp, startWhileLabel, "", "WHILE TOP target");
+        emit_expr(p->s1, fp);
+        sprintf(s, "beq $a0 $0 %s", endWhileLabel); 
+        emit(fp, "", s, "WHILE branch out");
+        emit_ast(p->s2, fp);
+        sprintf(s, "j %s", startWhileLabel);
+        emit(fp, "", s, "WHILE Jump back\n");
+        emit(fp, endWhileLabel, "", "End of WHILE");
+    }

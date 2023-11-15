@@ -36,4 +36,10 @@ void emit_read(ASTnode * p, FILE * fp);
 
 void emit_expr_helper(ASTnode * p, FILE * fp);
 
+void emit_assignment(ASTnode * p, FILE * fp);
+
+void emit_if(ASTnode * p, FILE * fp);
+
+void emit_iterationstmt(ASTnode * p, FILE * fp);
+
 #endif
