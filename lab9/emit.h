@@ -42,4 +42,12 @@ void emit_if(ASTnode * p, FILE * fp);
 
 void emit_iterationstmt(ASTnode * p, FILE * fp);
 
+void emit_params(ASTnode * p, FILE * fp);
+
+void emit_return(ASTnode * p, FILE * fp);
+
+void emit_call(ASTnode * p, FILE * fp);
+
+void emit_arglist(ASTnode * p, FILE * fp);
+
 #endif

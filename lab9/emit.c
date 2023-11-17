@@ -13,7 +13,7 @@ Purpose:
 #define WSIZE 4
 
 int GLABEL = 0;
-//char labelBuffer[20]; QUESTION: WHY DIDN'T THIS WORK
+int hasReturn = 0;
 
 //PRE: PTR to ASTnode
 //POST: All MIPS code directly and through helper functions.
@@ -99,6 +99,9 @@ void emit_ast(ASTnode * p, FILE * fp){
         case A_FUNDEC:   emit_function_dec(p, fp);
                          break;
 
+        case A_PARAM:   emit_params(p, fp);
+                         break;
+
         case A_COMPOUND: emit_ast(p->s2,fp); 
                          break;
 
@@ -124,6 +127,14 @@ void emit_ast(ASTnode * p, FILE * fp){
                         emit_iterationstmt(p, fp);
                         break;
 
+        case A_RETURNSTMT:
+                        emit_return(p, fp);
+                        break;
+
+        case A_EXPRESSIONSTMT:
+                        if(p->s1 != NULL) emit_expr(p->s1, fp);
+                        break;
+
         default: printf("emit_ast unknown nodetype %d\n", p->nodetype);
                  printf("Exiting program: FIX ME\n");
                  exit(1);
@@ -145,9 +156,17 @@ void emit_function_dec(ASTnode * p, FILE * fp){
 	emit(fp, "", "move $sp, $a0", "adjust the stack pointer");
     fprintf(fp,"\n\n");
 
+    if(p->s1 != NULL) emit_ast(p->s1, fp); //If the param type isn't void (NULL), emit params.
+
     emit_ast(p->s2, fp); //Calls for compound statement.
+    fprintf(fp,"\n");
 
+    if(hasReturn == 1){
+        emit(fp, "", "jr $ra", "return to the caller");
+        hasReturn = 0;
+    }
 
+    emit(fp, "", "li $a0, 0", "RETURN has no specified value set to 0");
     emit(fp, "", "lw $ra 4($sp)", "restore old environment RA");
 	emit(fp, "", "lw $sp ($sp)", "Return from function store SP");
 
@@ -157,9 +176,32 @@ void emit_function_dec(ASTnode * p, FILE * fp){
 	    emit(fp, "", "syscall", "EXIT everything");
     }
     else{
-        //FIX FIX FIX for function call return.
+        emit(fp, "", "jr $ra", "return to the caller");
     }
 }
+
+    //PRE:
+    //POST:
+    void emit_return(ASTnode * p, FILE * fp){
+        if(p->s1 != NULL) emit_expr(p->s1, fp);
+        hasReturn = 1;
+    }
+
+    //PRE:
+    //POST:
+    void emit_params(ASTnode * p, FILE * fp){
+        char s[100];
+        int i = 0;
+        sprintf(s, "sw $t%d, %d($sp)", i, p->symbol->offset * WSIZE);
+        emit(fp, "", s, "Load temp variable int formal paramter");
+
+        while(p->s1 != NULL){
+            i++;
+            sprintf(s, "sw $t%d, %d($sp)", i, p->s1->symbol->offset * WSIZE);
+            emit(fp, "", s, "Load temp variable int formal paramter");
+            p = p->s1;
+        }
+    }
 
     //PRE: PTR to a Write node.
     //POST: MIPS code to perform Write.
@@ -205,6 +247,12 @@ void emit_function_dec(ASTnode * p, FILE * fp){
                         emit(fp, "", "lw $a0, ($a0)", "Expressions is a var, get value.");
                         return;
                         break;
+
+            case A_CALL: emit_call(p, fp);
+                        break;
+
+            case A_ARGLIST: emit_arglist(p, fp);
+                            break;
 
             case A_EXPR: 
                 switch (p->operator){
@@ -294,6 +342,49 @@ void emit_function_dec(ASTnode * p, FILE * fp){
         }//End of switch of base cases
     }
 
+    //PRE:
+    //POST:
+    void emit_call(ASTnode * p, FILE * fp){
+        char s[100], j[100];
+        int t = 0;
+        sprintf(s,"jal %s", p->name);
+
+        emit(fp,"","","Setting Up Function Call");
+	    emit(fp,"","","evaluate Function Parameters");
+        if(p->s1 != NULL){
+            emit_expr(p->s1, fp);
+        }
+		emit(fp,"","","place Parameters into T registers");
+        if(p->s1 != NULL){
+            sprintf(j,  "lw $a0, %d($sp)", p->s1->symbol->offset * WSIZE);
+            emit(fp, "", j, "pull out stored Arg"); 
+            sprintf(j, "move $t%d, $a0", t);
+	        emit(fp, "", j, "move arg in temp");
+            while(p->s1->s2 != NULL){
+                t++;
+                sprintf(j,  "lw $a0, %d($sp)", p->s1->s2->symbol->offset * WSIZE);
+                emit(fp, "", j, "pull out stored Arg"); 
+                sprintf(j, "move $t%d, $a0", t);
+	            emit(fp, "", j, "move arg in temp");
+                p = p->s1;
+            }
+        }
+        fprintf(fp, "\n");
+        emit(fp, "", s, "Call the function\n");
+    }
+
+    //PRE:
+    //POST:
+    void emit_arglist(ASTnode * p, FILE * fp){
+        char s[100];
+        emit_expr(p->s1, fp);
+        sprintf(s, "sw $a0, %d($sp)", p->symbol->offset * WSIZE);
+        emit(fp, "", s, "Store call Arg temporarily\n");
+        if(p->s2 != NULL){
+            emit_expr(p->s2, fp);
+        }
+    }
+
     //PRE: PTR to A_VAR
     //POST: $a0 will be the memory location of the variable.
     void emit_var(ASTnode *p, FILE *fp) {
@@ -329,8 +420,8 @@ void emit_function_dec(ASTnode * p, FILE * fp){
         fprintf(fp,"\n\n");
     }
 
-    //PRE:
-    //POST:
+    //PRE: PTR to A_EXPR
+    //POST: MIPS code to store the LHS temporarily, getting the RHS, and restoring LHS from memory.
     void emit_expr_helper(ASTnode * p, FILE * fp){
         char placeholder[100];
         emit_expr(p->s1, fp);
@@ -342,8 +433,8 @@ void emit_function_dec(ASTnode * p, FILE * fp){
 	    emit(fp, "", placeholder, "expression restore LHS from memory");
     }
 
-    //PRE:
-    //POST:
+    //PRE: PTR to A_ASSIGNMENT
+    //POST: MIPS code to handle assignment statements that stores the RHS temporarily and placing the RHS into memory.
     void emit_assignment(ASTnode * p, FILE * fp){
         char s[100];
         emit_expr(p->s2, fp);
@@ -355,8 +446,8 @@ void emit_function_dec(ASTnode * p, FILE * fp){
 	    emit(fp, "", "sw $a1 ($a0)", "Assign place RHS into memory");
     }
 
-    //PRE:
-    //POST:
+    //PRE: PTR to A_IF
+    //POST: MIP code to handle if and if-else statements by handling statements with labels.
     void emit_if(ASTnode *p, FILE *fp) {
         char s[100];
         char *label_else = CreateLabel();
@@ -390,6 +481,8 @@ void emit_function_dec(ASTnode * p, FILE * fp){
         emit(fp, label_end, "", "End of IF");
     }
 
+    //PRE: PTR to A_ITERATIONSTMT 
+    //POST: MIPS code to generate labels and handling iterations with breakout/jump points.
     void emit_iterationstmt(ASTnode * p, FILE * fp){
         char s[100];
         char * startWhileLabel = CreateLabel();
