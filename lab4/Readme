@@ -1,0 +1,12 @@
+Name: Dominik Trujillo
+Date: 09/14/2023
+Project: LAB4 -- Symbol Table with YACC 
+
+This project builds upon the concepts of compilation by incorporating advanced data types into the YACC stack and integrating a symbol table introduced 
+in a previous assignment. The objective of this project is to enhance Lab2.2 by introducing a Lab3 symbol table system. 
+This enhancement involves replacing register names with more flexible variable names, enforcing variable 
+declaration before usage, and assigning memory locations to each declared variable. To achieve these goals, the project extends 
+the Context-Free Grammar of the calculator, modifies the LEX program to recognize variable names, updates YACC directives to 
+handle symbol table storage and address retrieval, and introduces syntax directed semantic actions in the C code to manage variable 
+recognition, duplication checks, and memory assignments. Overall, this project enhances the calculator's functionality, making it more versatile and robust in handling 
+variable-based calculations.
