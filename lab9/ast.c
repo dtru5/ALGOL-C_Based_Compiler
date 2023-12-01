@@ -11,37 +11,23 @@
 */
 
 /*
-    Name: Dominik Trujillo
-    Date: 10/29/2023
-    Lab: LAB 7 ALGOL -- add symbol table and type checking
-    Purpose: The objective of this lab is to enhance a compiler's functionality by incorporating a symbol table, semantic actions, 
-	and rudimentary type checking. The key goals and requirements of this lab include:
-
-	Symbol Table Management: To facilitate proper scope management and variable tracking, the compiler will maintain a static 
-	scope counter referred to as "level." When entering a compound statement, the level is incremented, and upon exiting, it is
-	decremented. During the exit, all symbols defined at that level are removed from the symbol table. Offsets are adjusted 
-	accordingly to account for the memory allocated to the removed symbols. New variables must be inserted into the symbol table 
-	when declared, including information about their level and size. The offset for each variable is assigned based on its type, 
-	with scalars assigned 1, arrays their respective sizes, and functions using registers for return values instead of memory.
-
-	Type Checking: A fundamental type checking mechanism is implemented to prevent illegal operations, such as combining INT and 
-	VOID types in expressions. Variables must be used in the correct context, distinguishing between scalars, arrays, and functions. 
-	Type compatibility is enforced for assignment statements and expressions to ensure the integrity of the generated code.
-
-	Symbol Table Requirements: The YACC file is modified to incorporate the symbol table, enabling the compiler to manage variable
-	declarations and usages efficiently. Upon the completion of a compound statement, all variables defined within that context are 
-	displayed, and subsequently, they are removed from the symbol table. The verification process ensures that variable names are both
-	defined and used correctly. Type inheritance is implemented for expressions. Furthermore, the symbol table maintains the level for
-	each entry, with level 0 reserved for global variables and functions, level 1 for function parameters and the primary compound 
-	statement of the function. The level is incremented as nested compound statements are encountered and decremented when exiting these nested scopes.
-
-	In summary, this lab's primary objective is to equip the compiler with the capability to manage
-	symbol tables effectively, perform rudimentary type checking, and handle scope management. These enhancements aim to 
-	improve the compiler's code generation process, making it more robust and reliable.
-
-    Changes Made: 
-        -In A_VARDEC, A_FUNDEC, A_PARAM, A_VAR added actions to print out the offset and level.
-        -For A_FUNDEC, just print out the size.
+Name: Dominik Trujillo
+Date: 11/4/2023
+LAB9 ALGOL Create MIPS code from you AST
+Purpose: The purpose of this lab is to implement a MIPS code generator for ALGOL structures using an Abstract Syntax Tree (AST).
+The primary objectives include creating MIPS code for ALGOL constructs with jumps, labels, and MIPS directives, 
+incrementally developing MIPS code for the ALGOL language, and gaining an understanding of activation records. 
+The lab emphasizes updating the main program to accept command-line arguments, copying the AST printing routine to 
+create an "emit" section for generating MIPS code, and implementing functions to handle standard header elements for 
+MIPS to define arrays, scalars, and strings. Additional goals involve creating simplified code for basic functionalities
+such as printing "hello world," handling integers, and managing variable input/output. The lab also focuses on updating 
+helper functions for evaluating expressions, making assignments work correctly, enhancing the system to handle If/while 
+constructs, and extending support for arrays The complexity increases gradually, allowing students
+to tackle one functional unit at a time. The lab encourages documentation for each function and major construct in the 
+emit.c file to facilitate understanding and evaluation. Overall, the lab aims to provide students with hands-on experience in 
+MIPS code generation while reinforcing their understanding of ALGOL language construct; and ultimately, this lab aims to 
+demonstrate our complete works from LEX, YACC, using ASTs, and emiting the corresponding MIPS code to have a relatively completed 
+compiler.
 */
 
 #include<stdio.h>

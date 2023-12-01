@@ -1,4 +1,0 @@
-Added:
--int argc, char * argv[] into main's parameters to capture command line arguments.
--FILE *fp; into main's body to have a file pointer called fp.
--fprintf(stderr, "The input is syntactically correct\n"); Added this print statement into main's body to display the given syntax is correct.

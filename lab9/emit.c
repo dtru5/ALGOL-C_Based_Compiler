@@ -1,19 +1,34 @@
 /*
 Name: Dominik Trujillo
 Date: 11/4/2023
-Lab:
-Purpose:
+LAB9 ALGOL Create MIPS code from you AST
+Purpose: The purpose of this lab is to implement a MIPS code generator for ALGOL structures using an Abstract Syntax Tree (AST).
+The primary objectives include creating MIPS code for ALGOL constructs with jumps, labels, and MIPS directives, 
+incrementally developing MIPS code for the ALGOL language, and gaining an understanding of activation records. 
+The lab emphasizes updating the main program to accept command-line arguments, copying the AST printing routine to 
+create an "emit" section for generating MIPS code, and implementing functions to handle standard header elements for 
+MIPS to define arrays, scalars, and strings. Additional goals involve creating simplified code for basic functionalities
+such as printing "hello world," handling integers, and managing variable input/output. The lab also focuses on updating 
+helper functions for evaluating expressions, making assignments work correctly, enhancing the system to handle If/while 
+constructs, and extending support for arrays The complexity increases gradually, allowing students
+to tackle one functional unit at a time. The lab encourages documentation for each function and major construct in the 
+emit.c file to facilitate understanding and evaluation. Overall, the lab aims to provide students with hands-on experience in 
+MIPS code generation while reinforcing their understanding of ALGOL language construct; and ultimately, this lab aims to 
+demonstrate our complete works from LEX, YACC, using ASTs, and emiting the corresponding MIPS code to have a relatively completed 
+compiler.
 */
+
 #include <stdlib.h>
 #include <string.h>
 #include "emit.h"
 #include "symtable.h"
 #include "ast.h"
 
-#define WSIZE 4
+#define WSIZE 4 //Defining the wsize to be a constant 4
 
-int GLABEL = 0;
-int hasReturn = 0;
+int GLABEL = 0; //For global labels 
+
+int ARGMAX = 0; //For max arguments
 
 //PRE: PTR to ASTnode
 //POST: All MIPS code directly and through helper functions.
@@ -28,8 +43,8 @@ void EMIT(ASTnode * p, FILE * fp){
     emit_ast(p, fp);
 }
 
-//PRE:
-//POST:
+// PRE: PTR to ASTnode
+// POST: Generates MIPS code for global variable declarations in the .data section.
 void EMIT_GLOBALS(ASTnode * p, FILE * fp){
     if(p == NULL){
         return;
@@ -44,8 +59,8 @@ void EMIT_GLOBALS(ASTnode * p, FILE * fp){
     EMIT_GLOBALS(p->s2, fp);
 }
 
-//PRE:
-//POST:
+// PRE: PTR to ASTnode
+// POST: Generates MIPS code for string declarations in the .data section.
 void EMIT_STRINGS(ASTnode * p, FILE * fp){
     if(p == NULL) return;
 
@@ -58,8 +73,8 @@ void EMIT_STRINGS(ASTnode * p, FILE * fp){
     EMIT_STRINGS(p->s2, fp);
 }
 
-//PRE:
-//POST:
+// PRE: None
+// POST: Generates a unique label for MIPS assembly code and returns that label.
 char* CreateLabel() {    
     char hold[100];
     char * label;
@@ -159,12 +174,8 @@ void emit_function_dec(ASTnode * p, FILE * fp){
     if(p->s1 != NULL) emit_ast(p->s1, fp); //If the param type isn't void (NULL), emit params.
 
     emit_ast(p->s2, fp); //Calls for compound statement.
-    fprintf(fp,"\n");
 
-    if(hasReturn == 1){
-        emit(fp, "", "jr $ra", "return to the caller");
-        hasReturn = 0;
-    }
+    fprintf(fp,"\n");
 
     emit(fp, "", "li $a0, 0", "RETURN has no specified value set to 0");
     emit(fp, "", "lw $ra 4($sp)", "restore old environment RA");
@@ -180,15 +191,17 @@ void emit_function_dec(ASTnode * p, FILE * fp){
     }
 }
 
-    //PRE:
-    //POST:
+    // PRE: PTR to A_RETURNSTMT
+    // POST: Generates MIPS code for returning from a function, including restoring the old environment.
     void emit_return(ASTnode * p, FILE * fp){
-        if(p->s1 != NULL) emit_expr(p->s1, fp);
-        hasReturn = 1;
+        if(p->s1 != NULL)  emit_expr(p->s1, fp);
+        emit(fp, "", "lw $ra 4($sp)", "restore old environment RA");
+        emit(fp, "", "lw $sp ($sp)", "Return from function store SP");
+        emit(fp, "", "jr $ra", "return to the caller");
     }
 
-    //PRE:
-    //POST:
+    // PRE: PTR to A_PARAM
+    // POST: Generates MIPS code for setting up parameters on the stack.
     void emit_params(ASTnode * p, FILE * fp){
         char s[100];
         int i = 0;
@@ -329,6 +342,12 @@ void emit_function_dec(ASTnode * p, FILE * fp){
                             emit(fp, "", "or $a0, $a0, $a1", "EXPR OR");
                             break;
 
+                        case A_NOT:
+                            emit_expr(p->s1, fp); //Emit the Factor of A_NOT
+                            emit(fp, "", "or $a0, $a0, $zero", "EXPR NOT"); //XOR to flip the bits to get inverse of value.
+                            emit(fp, "", "slti $a0, $a0, 1", "EXPR NOT"); 
+                            break;
+
                         default:
                             printf("unknown operator %d\n", p->operator);
                             exit(1);
@@ -342,73 +361,113 @@ void emit_function_dec(ASTnode * p, FILE * fp){
         }//End of switch of base cases
     }
 
-    //PRE:
-    //POST:
-    void emit_call(ASTnode * p, FILE * fp){
-        char s[100], j[100];
-        int t = 0;
-        sprintf(s,"jal %s", p->name);
+// PRE: PTR to A_CALL
+// POST: Generates MIPS code for function call, including setting up function parameters and making the function call.
+void emit_call(ASTnode * p, FILE * fp){
+    ARGMAX = 0;
+    char s[100], j[100];
+    int t = 0;
 
-        emit(fp,"","","Setting Up Function Call");
-	    emit(fp,"","","evaluate Function Parameters");
-        if(p->s1 != NULL){
-            emit_expr(p->s1, fp);
-        }
-		emit(fp,"","","place Parameters into T registers");
-        if(p->s1 != NULL){
-            sprintf(j,  "lw $a0, %d($sp)", p->s1->symbol->offset * WSIZE);
-            emit(fp, "", j, "pull out stored Arg"); 
+    // Generate the jump and link (jal) instruction for the function call
+    sprintf(s,"jal %s", p->name);
+
+    // Comments for setting up the function call
+    emit(fp,"","","Setting Up Function Call");
+    emit(fp,"","","Evaluate Function Parameters");
+
+    // Generate code to evaluate and store function parameters on the stack
+    if(p->s1 != NULL) emit_expr(p->s1, fp);
+
+    if(ARGMAX > 7){
+        printf("More than 7 arguments.. Exiting\n");
+        exit(1);
+    }
+
+    emit(fp,"","","Place Parameters into T registers");
+
+    // Check if there are parameters to process
+    if(p->s1 != NULL){
+        // Load the first argument from the stack
+        sprintf(j, "lw $a0, %d($sp)", p->s1->symbol->offset * WSIZE);
+        emit(fp, "", j, "Pull out stored Arg"); 
+        // Move the first argument to a temporary register
+        sprintf(j, "move $t%d, $a0", t);
+        emit(fp, "", j, "Move arg into temp");
+        
+        // Loop through the remaining arguments
+        while(p->s1->s2 != NULL){
+            t++;
+            // Load the next argument from the stack
+            sprintf(j, "lw $a0, %d($sp)", p->s1->s2->symbol->offset * WSIZE);
+            emit(fp, "", j, "Pull out stored Arg"); 
+            // Move the argument to a temporary register
             sprintf(j, "move $t%d, $a0", t);
-	        emit(fp, "", j, "move arg in temp");
-            while(p->s1->s2 != NULL){
-                t++;
-                sprintf(j,  "lw $a0, %d($sp)", p->s1->s2->symbol->offset * WSIZE);
-                emit(fp, "", j, "pull out stored Arg"); 
-                sprintf(j, "move $t%d, $a0", t);
-	            emit(fp, "", j, "move arg in temp");
-                p = p->s1;
-            }
+            emit(fp, "", j, "Move arg into temp");
+            p = p->s1;
         }
-        fprintf(fp, "\n");
-        emit(fp, "", s, "Call the function\n");
+    }
+    fprintf(fp, "\n");
+
+    // Emit the jal instruction to call the function
+    emit(fp, "", s, "Call the function\n");
+}
+
+
+    //PRE: PTR to arg list
+    //POST: All compainion create temp are set to right value
+void emit_arglist(ASTnode * p, FILE * fp){
+    char s[100];
+
+    // Check if the argument list is empty
+    if(p == NULL){
+        return;
     }
 
-    //PRE:
-    //POST:
-    void emit_arglist(ASTnode * p, FILE * fp){
-        char s[100];
-        emit_expr(p->s1, fp);
-        sprintf(s, "sw $a0, %d($sp)", p->symbol->offset * WSIZE);
-        emit(fp, "", s, "Store call Arg temporarily\n");
-        if(p->s2 != NULL){
-            emit_expr(p->s2, fp);
-        }
+    // Evaluate the expression of the first argument and store the result on the stack
+    emit_expr(p->s1, fp);
+    sprintf(s, "sw $a0, %d($sp)", p->symbol->offset * WSIZE);
+    emit(fp, "", s, "Store call Arg temporarily\n");
+    ARGMAX++;
+
+    // Check if there is a second argument
+    if(p->s2 != NULL){
+        // Evaluate the expression of the second argument
+        emit_expr(p->s2, fp);
     }
+}
 
     //PRE: PTR to A_VAR
     //POST: $a0 will be the memory location of the variable.
-    void emit_var(ASTnode *p, FILE *fp) {
+void emit_var(ASTnode *p, FILE *fp) {
     char s[100];
 
+    // Check if the variable is an array
     if (p->symbol->SubType == SYM_ARRAY) {
+        // Evaluate the array index expression and store the result in $a0
         emit_expr(p->s1, fp);
         emit(fp, "", "move $a1, $a0", "VAR copy index array in a1");
         emit(fp, "", "sll $a1, $a1, 2", "multiply the index by word size via SLL");
     }
 
+    // Check if the variable is a global variable
     if (p->symbol->level == 0) {
+        // Load the address of the global variable into $a0
         sprintf(s, "la $a0, %s", p->name);
         emit(fp, "", s, "Emit var global variable");
     } else {
+        // Variable is a local variable, make a copy of the stack pointer
         emit(fp, "", "move $a0, $sp", "VAR local make a copy of stack pointer");
+        // Adjust the stack pointer by the offset to get the local variable's address
         sprintf(s, "addi $a0, $a0, %d", p->symbol->offset * WSIZE);
         emit(fp, "", s, "VAR local stack pointer plus offset");
     }
 
+    // Check if the variable is an array and add the internal offset
     if (p->symbol->SubType == SYM_ARRAY) {
         emit(fp, "", "add $a0, $a0, $a1", "VAR array add internal offset");
     }
 }
+
 
     //PRE: PTR to A_READ
     //POST: MIPS code to generate the location of a var and read it.
@@ -459,7 +518,6 @@ void emit_function_dec(ASTnode * p, FILE * fp){
         // Branch to the else part if the condition is false
         sprintf(s, "beq $a0 $0 %s", label_else);
         emit(fp, "", s, "IF branch to else part\n\n");
-
         emit(fp, "", "", "the positive portion of IF");
 
         // Emit the positive portion of the IF statement
@@ -485,8 +543,10 @@ void emit_function_dec(ASTnode * p, FILE * fp){
     //POST: MIPS code to generate labels and handling iterations with breakout/jump points.
     void emit_iterationstmt(ASTnode * p, FILE * fp){
         char s[100];
+        // Create 2 labels that will be for the start of the while loop and another for the end of the while look
         char * startWhileLabel = CreateLabel();
         char * endWhileLabel = CreateLabel();
+        
         emit(fp, startWhileLabel, "", "WHILE TOP target");
         emit_expr(p->s1, fp);
         sprintf(s, "beq $a0 $0 %s", endWhileLabel); 

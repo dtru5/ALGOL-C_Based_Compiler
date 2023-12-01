@@ -1,8 +1,21 @@
 /*
 Name: Dominik Trujillo
 Date: 11/4/2023
-Lab:
-Purpose:
+LAB9 ALGOL Create MIPS code from you AST
+Purpose: The purpose of this lab is to implement a MIPS code generator for ALGOL structures using an Abstract Syntax Tree (AST).
+The primary objectives include creating MIPS code for ALGOL constructs with jumps, labels, and MIPS directives, 
+incrementally developing MIPS code for the ALGOL language, and gaining an understanding of activation records. 
+The lab emphasizes updating the main program to accept command-line arguments, copying the AST printing routine to 
+create an "emit" section for generating MIPS code, and implementing functions to handle standard header elements for 
+MIPS to define arrays, scalars, and strings. Additional goals involve creating simplified code for basic functionalities
+such as printing "hello world," handling integers, and managing variable input/output. The lab also focuses on updating 
+helper functions for evaluating expressions, making assignments work correctly, enhancing the system to handle If/while 
+constructs, and extending support for arrays The complexity increases gradually, allowing students
+to tackle one functional unit at a time. The lab encourages documentation for each function and major construct in the 
+emit.c file to facilitate understanding and evaluation. Overall, the lab aims to provide students with hands-on experience in 
+MIPS code generation while reinforcing their understanding of ALGOL language construct; and ultimately, this lab aims to 
+demonstrate our complete works from LEX, YACC, using ASTs, and emiting the corresponding MIPS code to have a relatively completed 
+compiler.
 */
 
 #ifndef EMIT_H
