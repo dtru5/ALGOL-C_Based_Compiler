@@ -51,7 +51,7 @@ The main goal is to generate MIPS assembly code for ALGOL constructs while reinf
 
 ### To compile an .al ALGOL source file and generate MIPS assembly:
 
-> ./lab9 -o output < program.al
+> ./lab9 -o [output file name] < program.al
 
 ## Running the Generated MIPS Code
 
