@@ -45,6 +45,7 @@ The main goal is to generate MIPS assembly code for ALGOL constructs while reinf
 ### Compilation
 
 > cd lab9
+
 > make
 
 ## Running the Compiler
