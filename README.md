@@ -44,19 +44,19 @@ The main goal is to generate MIPS assembly code for ALGOL constructs while reinf
 
 ### Compilation
 
-- cd lab9
-- make
+> cd lab9
+> make
 
 ## Running the Compiler
 
 ### To compile an .al ALGOL source file and generate MIPS assembly:
 
-- ./lab9 -o output.asm < program.al
+> ./lab9 -o output < program.al
 
 ## Running the Generated MIPS Code
 
 ### To run the resulting MIPS assembly using the MARS simulator:
-- java -jar Mars4_5.jar sm output.asm
+> java -jar Mars4_5.jar sm output.asm
 
 Note: Ensure Mars4_5.jar is in your working directory or provide the correct path, but is included anyways into lab9 directory
 
