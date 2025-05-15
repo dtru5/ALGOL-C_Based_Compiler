@@ -3,7 +3,8 @@
 This project implements a MIPS code generator for ALGOL-like language constructs using an Abstract Syntax Tree (AST). The compiler is developed in stages to gradually build up complexity and provide a strong learning foundation in compiler construction and code generation.
 
 The core of the project is housed in the lab9 folder, which contains the complete compiler pipeline—from lexical analysis and parsing (using LEX and YACC) to AST construction and MIPS code emission.
-Purpose
+
+## Purpose
 
 The main goal is to generate MIPS assembly code for ALGOL constructs while reinforcing compiler design principles and gaining hands-on experience with:
 
